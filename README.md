@@ -1,0 +1,1 @@
+Forked from https://github.com/SuffolkLITLab/docassemble-AffidavitofIndigencyMAVC to migrate to the ALDocument class

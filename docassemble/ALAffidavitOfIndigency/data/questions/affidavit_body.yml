@@ -1,0 +1,921 @@
+---
+include:
+  - docassemble.MAVirtualCourt:basic-questions.yml
+  - docassemble.MAPovertyScale:poverty.yml
+---
+modules:
+  - docassemble.income.income
+  - docassemble.MACourts.macourts  
+---
+objects:
+  - hh_income: Job
+  - fees: DADict.using(gathered=True, auto_gather=False, object_type=DAObject)
+#  - court: MACourt
+#  - macourts: MACourtList.using(courts=['housing_courts','bmc','district_courts','superior_courts', 'land_court','juvenile_courts','probate_and_family_courts'])
+---
+id: affidavit prompts
+code: |
+  case_new_or_existing
+  if case_new_or_existing == "back_fees":
+    exit_cant_pay_back_fees
+  talk_to_court    
+  dont_know_docket_number 
+  affidavit_match_to_case_prompts = True
+---
+id: question order
+code: |
+  # These should be all of the necessary questions, not just the 
+  # intro screen/etc.
+  user_role
+  users.gather()
+  if len(users) > 1:
+    explain_separate_affidavits
+  other_parties.gather()
+  case_name
+  public_assistance_kinds
+  if not public_assistance_kinds.any_true():
+    has_household_members
+    if not household_income_qualifies:
+      can_afford
+  if is_indigent:      
+    qualify_interstitial
+    fees['Filing fee'].waive
+    fees['Costs of an expert witness'].waive
+    fees_interstitial
+    users[0].name.first
+    users[0].address.address
+    users[0].mobile_number
+    tried_geolocating
+    # local_housing_court
+    all_matches
+    filtered
+    str(courts[0])
+
+    # show_court_information
+
+    set_empty_fees
+    # trigger other computed values
+    # filing_fees_amount
+    annually
+  ask_affidavit_questions = True
+---
+code: |
+  is_indigent = public_assistance_kinds.any_true() or household_income_qualifies or not can_afford
+---
+id: intro
+question: |
+  Get help with court costs and fees
+subquestion: |
+  This short online form will help you fill out an "Affidavit
+  of Indigency." This form tells the court that you cannot
+  pay court fees.
+    
+  In some cases the waiver is automatic. In other cases
+  we may need to ask you for detailed information about your
+  income and expenses.
+  
+  This form is never filed on its own. Make sure that the court
+  know what case to attach this form to. You may want to call
+  the court and talk to the clerk before you submit this form. We will
+  give you the number of the court clerk at the end of this form.
+
+  You can only use this form to ask the court to help with **new**
+  costs. The court cannot give you a refund.
+  
+  This form and all of your answers on it will be kept confidential
+  (private). Only court staff will be able to see your completed form.
+continue button field: aff_of_indigency_intro
+help: 
+  label: |
+    What kinds of fees can the court help me with?
+  content: |
+    The court can decide not to charge you costs that you would normally
+    pay to the court.
+    
+    For example:
+    
+    * Filing fees.
+    * Costs for recordings and transcripts of court hearings.
+    
+    It can also help you pay for certain things that you would pay to
+    someone else.
+    
+    For example:
+    
+    * The cost of serving a witness or the other party.
+    * Cost of taking a deposition.
+    * An appeal bond.
+    * Cost of an expert witness.
+    
+    If you ask for something else that is important for your trial,
+    the court may be able to pay for it. But it may not.
+    
+    You cannot use this form to ask the court to pay for an
+    attorney to represent you.
+---
+id: new or existing case
+question: |
+  Is this a new case?
+subquestion: |
+  You can use this affidavit in a new case, or to waive 
+  new fees. You cannot get the court to refund court costs
+  for you with this form.
+  
+  What kind of case is this?
+fields:
+  - no label: case_new_or_existing
+    datatype: radio
+    choices:
+      - This is a **new** case: new
+      - I need help paying a new cost in an **existing** case: existing
+      - I want the court to pay me back fees in an **existing** case: back_fees
+---
+id: talk to the court
+continue button field: talk_to_court
+question: |
+  Make sure the court knows what case this is about
+subquestion: |
+  % if case_new_or_existing == "new":
+  You said this is part of a new case. This form does not start a new
+  case on its own. You still need to file that paperwork separately.
+  
+  Make sure that the cover
+  letter with your new case tells the court that you will be filing
+  an affidavit of indigency.
+  
+  If you already filed the new case paperwork without a cover letter,
+  call the clerk to explain what you are doing. We will give you the 
+  number of your court at the end of this online form.
+  % else:
+  You said that this is part of an existing case. The clerk needs to 
+  know what case you are filing in.
+  
+  Look for the docket number on any court paperwork you have. It is different
+  for each court and each kind of case. It may look a little like this: 
+  20-50SU-1234.
+  
+  If you cannot find the docket number, you may want to call the court clerk
+  before you submit this form. We will give you the clerk's phone number
+  at the end of this online form.
+  % endif
+---
+event: exit_cant_pay_back_fees
+question: |
+  This form is not right for you
+decoration: hand-paper
+subquestion: |
+  You said you want the court to pay you back money.
+
+  You can only use this form to ask the court to pay or waive fees that 
+  have not been paid yet.
+buttons:
+  - Restart: restart
+  - Exit: exit
+    url: https://massaccess.suffolklitlab.org
+---
+reconsider: True
+code: |
+  additional_income_allowed = household_size * poverty_increment
+  household_income_limit = (poverty_base + additional_income_allowed) * poverty_multiplier
+
+  household_income_qualifies = int((household_income_limit)/12) >=  int(household_monthly_income)
+---
+reconsider: True
+code: |
+  household_size = household_additional_size + 1 if has_household_members else 1
+---
+code: |
+  household_monthly_income = hh_income.amount(period_to_use=12)
+---
+id: any other users
+question: |
+  Did anyone else file with you?
+subquestion: |
+  % if len(users.elements) > 1:
+  You have already told us about ${comma_and_list(users.complete_elements())}.
+  % else:
+  
+  We need the name of each person who is part of this case so that
+  the court clerk can waive fees for the right file.
+  
+  We will ask for the name of each person on the "other side"
+  next.
+  % endif
+  
+  Is anyone else on your side of this case?
+yesno: users.there_is_another 
+---
+id: other users names
+question: |
+  What is the name of the ${ ordinal(i) } person on your side of the case?
+fields:
+  - First Name: users[i].name.first
+  - Middle Name: users[i].name.middle
+    required: False
+  - Last Name: users[i].name.last
+  - Suffix: users[i].name.suffix
+    required: False
+    code: |
+      name_suffix()
+---      
+id: other users there are any
+question: |
+  % if users == plaintiffs:
+  Is there a **defendant** or respondent in this case? 
+  % else:
+  Is there a **plaintiff** or petitioner in this case?
+  % endif
+subquestion: |
+  % if users == plaintiffs:
+  Answer yes if there is a person or organization you are suing or taking to court.
+  % else:
+  You should be able to find out from the paperwork that told you to 
+  go to court.
+  
+  Answer yes if someone else has sued you or is bringing you to court.
+  % endif
+yesno: other_parties.there_are_any
+---
+id: names of opposing parties
+question: |
+  % if users==plaintiffs:
+  Please list the name of each **defendant** or respondent in this
+  case below
+  % else:
+  Please list the name of each **plaintiff** or petitioner in this case below
+  % endif
+subquestion: |
+  Click "${word("Add another")}" to add more.
+list collect: 
+  enable: True
+  label: |
+    % if users==plaintiffs:
+    Defendant/Respondent ${i+1}    
+    % else:
+    Plaintiff/Petitioner ${i+1}
+    % endif
+fields:
+  - Is this a person, or a business?: other_parties[i].person_type
+    input type: radio
+    choices:
+      - Business or organization: business
+      - Person: individual
+  - First name: other_parties[i].name.first
+    show if:
+      variable: other_parties[i].person_type
+      is: "individual"
+  - Last name: other_parties[i].name.last
+    show if:
+      variable: other_parties[i].person_type      
+      is: "individual"
+  - Suffix: other_parties[i].name.suffix
+    code: |
+      name_suffix()
+    show if:
+      variable: other_parties[i].person_type      
+      is: "individual"
+    required: False      
+  - Name of organization or business: other_parties[i].name.first
+    show if:
+      variable: other_parties[i].person_type
+      is: business
+---
+id: explain separate affidavits
+question: |
+  ${comma_and_list([user for user in users if str(user) != str(users[0])] )}
+  will need to file their own affidavit(s)
+subquestion: |
+  Each person who is part of a case needs to file their own "affidavit
+  of indigency" if they are unable to pay court costs.
+continue button field: explain_separate_affidavits
+---
+code: |
+  if len(other_parties):
+    case_name = str(plaintiffs) + ' v. ' + str(defendants)
+  else:
+    case_name = "In re " + str(users)
+---
+code: |
+  all_matches = macourts.matching_courts(users[0].address, court_types=allowed_courts)
+  filtered = combined_locations(all_matches)
+---
+code: |
+  allowed_courts = [
+      "Boston Municipal Court",
+      "District Court",
+      "Superior Court",
+      "Housing Court",
+      "Probate and Family Court",
+      "Juvenile Court",
+      "Land Court",
+      # "Appeals Court",
+      ]
+---
+code: |
+  for fee in fees:
+    if not fees[fee].waive:
+      fees[fee] = DAEmpty()
+  set_empty_fees = True
+---
+code: |
+  if public_assistance_kinds.any_true():
+    hh_income = DAEmpty()
+    household_additional_size = DAEmpty()
+    household_size = DAEmpty()
+  set_empty_income = True
+---
+id: user benefits
+question: |
+  Do you get any of these benefits?
+subquestion: |  
+  Check any that apply
+fields:
+  - no label: public_assistance_kinds
+    datatype: checkboxes
+    choices:
+      - Transitional Aid to Families with Dependent Children (TAFDC): TAFDC
+      - Medicaid (MassHealth): Medicaid
+      - Emergency Aid to Elderly, Disabled or Children (EAEDC): EAEDC
+      - Massachusetts Veterans Benefits Programs: VA Benefits
+      - Supplemental Security Income (SSI): SSI
+    required: False
+---
+id: user income and household size
+question: |
+  About your income and household
+subquestion: |
+  Tell us about **how much** and **how often** you and your
+  household are paid.
+fields:
+  - Does anyone else live with you as part of your household?: has_household_members
+    datatype: yesnoradio
+    help: |
+      For example, count your children, spouse, or other family member
+      you take care of or who helps take care of you.
+  - How many people? Don't count yourself. : household_additional_size
+    datatype: integer
+    show if: has_household_members
+  - What is the total (after tax) income for your household?: hh_income.value
+    # step: 1
+    datatype: currency
+    validation messages:
+      number: |
+        Enter a number. Do not include commas.
+    help: |
+      Put in the amount you earn after taxes. This is
+      also called your "net" income.
+  - How often do you earn that amount?: hh_income.period
+    input type: radio
+    code: period_list()
+    datatype: integer
+---
+id: user ability to pay
+question: |
+  Can you afford to pay the court costs?
+subquestion: |
+  Answer yes if you can afford the costs. Answer no if you either can't afford the costs, or can't
+  afford to do so without depriving yourself
+  or your dependents of the necessities of life, including food, shelter and clothing
+yesno: can_afford
+---
+id: user does not qualify
+event: doesnt_qualify_ending
+question: |
+  Sorry, it looks like you don't qualify
+decoration: hand-paper  
+subquestion: |
+  To qualify for a waiver of court costs, you must meet one of these:
+  
+  1. You receive public assistance
+  1. Your income is below 125% of the Federal Poverty Level. For your household
+     of ${household_size}, the limit is ${currency(household_income_limit/12)} per month. However, you told us your income is ${currency(hh_income.amount(period_to_use=12))} per month.
+  1. You must be unable to afford to pay the costs, or unable to do so without depriving you or your dependents the necessities of life, including food, shelter, and clothing. You said you are able to pay the costs.
+---
+---
+id: user does not qualify
+continue button field: doesnt_qualify_interstitial
+question: |
+  Sorry, it looks like you don't qualify for a fee waiver
+subquestion: |
+  To qualify for a waiver of court costs, you must meet one of these:
+  
+  1. You receive public assistance
+  1. Your income is below 125% of the Federal Poverty Level. For your household
+     of ${household_size}, the limit is ${currency(household_income_limit/12)} per month. However, you told us your income is ${currency(hh_income.amount(period_to_use=12))} per month.
+  1. You must be unable to afford to pay the costs, or unable to do so without depriving you or your dependents the necessities of life, including food, shelter, and clothing. You said you are able to pay the costs.
+---
+id: select fees waived
+question: |
+  What fees do you need the court to waive or pay?
+subquestion: | 
+  If you're not sure yet, you can file another affidavit later.
+  
+  Check the boxes that you need below.
+fields:
+  # - Electronic filing fee (about $6/document): fees['E-filing'].waive
+  #   datatype: yesno
+  #   default: True
+  #   help: |
+  #     We've checked this by default because it applies in every case.
+  - Filing fee or e-filing fee: fees['Filing fee'].waive
+    datatype: yesno
+  - Amount (if known): fees['Filing fee'].amount
+    datatype: currency
+    required: False
+    show if: fees['Filing fee'].waive    
+  - Costs of serving the other party: fees['Service'].waive
+    datatype: yesno
+  - Amount (if known): fees['Service'].amount
+    datatype: currency
+    required: False
+    show if: fees['Service'].waive          
+  - Expert witness services, including examinations and testimony: fees['Costs of an expert witness'].waive
+    datatype: yesno
+  - Amount (if known):  fees['Costs of an expert witness'].amount
+    datatype: currency
+    required: False
+    show if:  fees['Costs of an expert witness'].waive    
+  - Describe the need for expert testimony/exams:  fees['Costs of an expert witness'].description
+    datatype: area
+    show if:  fees['Costs of an expert witness'].waive    
+  - Deposition-related costs: fees['Depositions'].waive
+    datatype: yesno
+  - Amount (if known):  fees['Depositions'].amount
+    datatype: currency
+    required: False
+    show if:  fees['Depositions'].waive    
+  - Who do you want to take a deposition of?:  fees['Depositions'].description
+    datatype: area
+    rows: 2
+    show if:  fees['Depositions'].waive    
+  - Fee for filing appeal: fees['Appeal cost'].waive
+    datatype: yesno
+  - Amount (if known): fees['Appeal cost'].amount
+    datatype: currency
+    required: False
+    show if: fees['Appeal cost'].waive
+  - Appeal bond: fees['Appeal bond'].waive
+    datatype: yesno
+  - Amount (if known): fees['Appeal bond'].amount
+    datatype: currency
+    required: False
+    show if: fees['Appeal bond'].waive    
+  - CD or cassette recordings of trial or hearing: fees['recordings'].waive
+    datatype: yesno
+  - note: |
+      You do not need to tell the court the amount to waive for
+      the cost of recordings.
+    show if: fees['recordings'].waive      
+  - Written transcript of trial or hearing: fees['transcript'].waive
+    datatype: yesno
+  - Amount (if known): fees['transcript'].amount    
+    datatype: currency
+    required: False
+    show if: fees['transcript'].waive        
+  - Other fee paid to the court: fees['Other'].waive    
+    datatype: yesno
+  - Amount (if known):  fees['Other'].amount
+    datatype: currency
+    required: False
+    show if:  fees['Other'].waive    
+  - Describe the other fee/cost:  fees['Other'].description
+    datatype: area
+    show if:  fees['Other'].waive    
+  - Other special fees or costs: fees['Other cost'].waive    
+    datatype: yesno
+  - Amount (if known):  fees['Other cost'].amount
+    datatype: currency
+    required: False
+    show if:  fees['Other cost'].waive    
+  - Describe the other fee/cost:  fees['Other cost'].description
+    datatype: area
+    show if:  fees['Other cost'].waive       
+validation code: |
+  if len([fee for fee in fees if fees[fee].waive]) < 1:
+    validation_error("You need to choose at least one.", field="fees['Other cost'].waive")
+---
+id: summary of fees
+question: |
+  Summary of fees
+subquestion: |
+  We'll ask the court to waive the following
+  fees:
+  
+  Fee | Amount (if known) | Edit
+  ----|-------|-------
+  % for fee in fees:
+  % if fees[fee].waive:
+  ${fee} | ${currency(fees[fee].amount) if hasattr(fees[fee],'amount') and fees[fee].amount else '' } | ${action_button_html(url_action("fees['"+ fee + "'].waive"))}
+  % endif
+  % endfor
+
+  ${action_button_html(url_action("fees['Filing fee'].waive"))}
+  
+  On the next screens, you will provide your name, address, and signature.
+  
+continue button field: fees_interstitial
+---
+id: qualify on face
+continue button field: qualify_interstitial
+question: |
+  % if not public_assistance_kinds.any_true() and not household_income_qualifies and not can_afford:
+  You need to submit a supplemental affidavit to learn if you qualify
+  % else:
+  Based on your answers, it looks like you qualify for a fee waiver
+  % endif
+subquestion: |
+  % if public_assistance_kinds.any_true():
+  Based on the information you gave us so far, you should qualify for a fee
+  waiver. Learn more at [MassLegalHelp.org](https://www.masslegalhelp.org/what-if-the-clerk-does-not-approve-my-affidavit-of-indigency-right-away-).
+  
+  You receive these public benefits: ${public_assistance_kinds.true_values()}
+  % elif household_income_qualifies:
+  Based on the information you gave us so far, you should qualify for a fee
+  waiver. Learn more at [MassLegalHelp.org](https://www.masslegalhelp.org/what-if-the-clerk-does-not-approve-my-affidavit-of-indigency-right-away-).
+  
+  **You earn less than the income limit.**
+
+  You said that your ${income_period(hh_income.period).lower()} income
+  is ${currency(hh_income.amount(period_to_use=hh_income.period))}.
+  
+  The limit for a household of ${nice_number(household_size)} is 125% of
+  the poverty level, or ${currency(household_income_limit/hh_income.period)}.
+  % elif not can_afford:
+  You told us that you can't afford to pay the fees and pay for the necessities
+  of life. A judge will take a closer look at your income and expenses and decide
+  if you qualify for sure.
+  
+  You also must complete a [supplemental affidavit](https://www.mass.gov/doc/supplement-to-the-affidavit-of-indigency/download). Please download, fill out, and print this on your own. It's not part of this online form yet.
+  
+  Keep going with this online form. You can file the supplemental affidavit
+  later.
+  % endif
+  
+  On the next screen, we'll ask you about the specific fees you want waived.
+help: |
+  If you get certain public benefits, or if you earn less than 125% of 
+  the federal poverty level, the law says that you qualify for a fee waiver.
+  If you earn more than that but still cannot afford to pay the costs
+  of going to court, you need to give the court more information. If the 
+  court agrees, they may waive your court costs. It is up to a judge to 
+  decide.
+  
+  * [What if the clerk does not approve my affidavit right away?](https://www.masslegalhelp.org/what-if-the-clerk-does-not-approve-my-affidavit-of-indigency-right-away-)
+  * [What if the clerk denies my affidavit?](https://www.masslegalhelp.org/what-if-the-clerk-denies-my-affidavit-of-indigency-)
+  
+---
+id: user address
+question: |
+  What is your address?
+subquestion: |
+  List the address where you want the court to mail you.
+fields:
+  - Street address: users[0].address.address
+    address autocomplete: True
+  - Unit: users[0].address.unit
+    required: False
+  - City: users[0].address.city
+  - State: users[0].address.state
+    code: states_list()
+  - Zip: users[0].address.zip 
+---
+id: contact information
+question: |
+  Contact information
+subquestion: |
+  Put at least one way for the court to reach you below.
+fields:
+  - Mobile number: users[0].mobile_number
+    required: False
+  - Other phone number: users[0].phone_number
+    required: False
+  - Email address: users[0].email    
+    datatype: email
+    required: False
+  - Contact notes: users[0].other_contact_method
+    input type: area
+    required: False
+    help: |
+      If you do not have a phone number or email the court can use, provide
+      specific contact instructions. For example, use a friend's phone number.
+      But the friend must be someone you can trust to tell you the court is
+      trying to reach you.
+validation code: |
+  if (not showifdef('users[0].phone_number') and \
+      (not showifdef('users[0].mobile_number')) and \
+      (not showifdef('users[0].email')) and \
+      (not showifdef('users[0].other_contact_method'))):
+    validation_error(word("You need to provide at least one contact method."), field="users[0].other_contact_method")
+help: |
+  You _must_ provide contact information so the court can reach you.
+---
+code: |
+  users[0].address.geolocate()
+  tried_geolocating = True
+---      
+id: choose a court
+question: |
+  % if users==plaintiffs:
+  Which court are you filing in?
+  % else:
+  Which court was your case filed in?
+  % endif
+subquestion: |
+  % if len(all_matches) > 0:
+  Below is a map of the court(s) that serve the
+  address you gave us, ${users[0].address.on_one_line(include_unit=True)}.
+  
+  ${map_of(combined_locations(all_matches))}
+  
+  % else:
+  We didn't find any matching court(s) that serve
+  ${users[0].address.on_one_line()}.
+  % endif
+
+  Choose a court from the list below.
+fields:
+  - no label: courts[0]
+    datatype: object_radio
+    choices: all_matches
+    none of the above: True
+    disable others: True
+    object labeler: |
+      lambda y: '**' + str(y) +' (' + y.address.city + ')**' + '[BR]' + y.address.on_one_line() + '[BR]' + y.description
+    show if: 
+      code: |
+        len(all_matches)      
+  - note: |
+      Does the list above look wrong? If you think you should file in a
+      court we didn't list, select "None of the above" and choose from the
+      full list below.
+    show if: 
+      code: |
+        len(all_matches)
+  - no label: courts[0]
+    datatype: object
+    object labeler: |
+      lambda y: (str(y) +' (' + y.address.city + ')') if y.address.city not in str(y) else str(y)
+    choices: macourts    
+help: 
+  label: |
+    How do I pick a court?
+  content: |
+    If you are responding to a case someone else filed, you may not
+    get to choose your court. But if you are starting a new case, you have
+    a choice. How do you know which court to choose?
+  
+    Massachusetts has 7 trial court departments:
+    
+    * District Court
+    * Boston Municipal Court (BMC)
+    * Superior Court
+    * Housing Court
+    * Probate and Family Court
+    * Juvenile Court
+    * Land Court
+    
+    The District Court, BMC, and Superior Court are all courts that can hear any
+    type of case. The Land Court, Probate and Family, Juvenile Court, and
+    Housing Court are all **specialist** courts that hear one kind of case. They
+    may have judges with special training as well as special resources
+    available.
+    
+    For example, the Housing Court has trained mediators, a special program for
+    tenants with disabilities, and legal help available on-site on the day that
+    eviction hearings are held.
+    
+    Different courts can make different kinds of decisions. Not every court can
+    give you every kind of help. For example, you cannot file a housing
+    discrimination case in the District Court. You can only ask for visitation
+    in the Probate and Family Court.
+    
+    Depending on where you live, different courts may be further or closer to
+    your address. There are about 100 district courts all over the state, but
+    each county has only one or a few Superior Courts or specialty courts.
+    
+    Choosing a court means thinking about what kind of help you need, as well as
+    which court you can get transportation to on the day of your hearing.
+    
+    Only you know the right choice.
+    
+    You can also view the court selection guidance at
+    [mass.gov](https://www.mass.gov/courthouse-locator).
+---
+id: show_court_information
+continue button field: show_court_information
+question: |
+  If you need to, call the court
+subquestion: |
+  The clerk for the ${courts[0]} can be called at:
+  
+  ${ courts[0].phone }
+---
+code: |
+  if url_args.get('recipient_email'):
+    recipient_email = url_args.get('recipient_email')
+    have_email_in_url_args = True
+  elif url_args.get('advocate_email'):
+    recipient_email = url_args.get('advocate_email')
+    have_email_in_url_args = True
+  elif url_args.get('case_email'):
+    recipient_email = url_args.get('case_email')
+    have_email_in_url_args = True
+  else:
+    have_email_in_url_args = False
+    recipient_email = ""
+---
+code: |
+  need_income = not public_assistance_kinds.any_true()
+---
+code: |
+  if not (hh_income.period in [52,26,12,1]):
+    monthly_income = hh_income.amount(period_to_use=12)
+    hh_income.period = 12
+    hh_income.value = monthly_income
+  weekly = 'Yes' if need_income and hh_income.period == 52 else 'No'
+  biweekly = 'Yes' if need_income and hh_income.period == 26 else 'No'
+  monthly = 'Yes' if need_income and hh_income.period == 12 else 'No'
+  annually = 'Yes' if need_income and hh_income.period == 1 else 'No'     
+---
+code: |
+  # filing_fees_amount = fees['E-filing'].amount + fees['Filing fee'].amount if defined("fees['Filing fee'].amount") and fees['Filing fee'].waive else fees['E-filing'].amount
+  filing_fees_amount = fees['Filing fee'].amount
+---
+code: |
+  form_to_file_no_cover = affidavitofindigency_attachment
+---
+reconsider: True
+attachment:
+  - name: Affidavit of Indigency
+    variable name: affidavitofindigency_attachment
+    filename: affidavitofindigency
+    pdf template file: affidavitofindigency.pdf
+    editable: False
+    skip undefined: True
+    fields:
+      - "court": ${courts[0]}
+      - "docket_number": ${case_name + ' ' + str(docket_numbers[0])}
+      - "user_name_full": ${users[0]}
+      - "user_address_on_one_line": ${users[0].address.on_one_line()}
+      - "gets_public_benefits": ${yesno(public_assistance_kinds.any_true())}
+      - "Medicaid": ${yesno(public_assistance_kinds['Medicaid'])}
+      - "TAFDC": ${yesno(public_assistance_kinds['TAFDC'])}
+      - "SSI": ${yesno(public_assistance_kinds['SSI'])}
+      - "EAEDC": ${yesno(public_assistance_kinds['EAEDC'])}
+      - "VA": ${yesno(public_assistance_kinds['VA Benefits'])}
+      - "below_poverty_level": ${yesno(household_income_qualifies) if need_income else "No"}
+      - "weekly": ${weekly}
+      - "biweekly": ${biweekly}
+      - "monthly": ${monthly}
+      - "annually": ${annually}
+      - "income_amount": ${hh_income.amount(period_to_use=hh_income.period)}
+      - "household_additional_size": ${household_additional_size if need_income else ''}
+      - "household_size": ${household_size if need_income else ''}
+      - "other_income": ${'Included above' if need_income else ''}
+      - "unable_to_pay": ${noyes(can_afford) if (need_income and not household_income_qualifies) else 'No'}
+      - "fee_filing": ${fees['Filing fee'].waive}
+      - "fee_filing_amount": ${currency(fees['Filing fee'].amount) if fees['Filing fee'].amount else ''}
+      - "fee_appeal": ${yesno(fees['Appeal cost'].waive)}
+      - "fee_appeal_amount": ${currency(fees['Appeal cost'].amount) if fees['Appeal cost'].waive and fees['Appeal cost'].amount else ''}
+      - "fee_service": ${yesno(fees['Service'].waive)}
+      - "fee_service_amount": ${currency(fees['Service'].amount) if fees['Service'].waive and fees['Service'].amount else ""}
+      - "fee_other": ${yesno(fees['Other'].waive)}
+      - "fee_other_amount": ${currency(fees['Other'].amount) if fees['Other'].waive and fees['Other'].amount else ""}      
+      - "fee_other_description": ${showifdef("fees['Other'].description")}
+      - "fee_expert": ${yesno(fees['Costs of an expert witness'].waive)}
+      - "fee_expert_amount": ${currency(fees['Costs of an expert witness'].amount) if (fees['Costs of an expert witness'].waive and fees['Costs of an expert witness'].amount) else ''}
+      - "fee_expert_description": ${showifdef("fees['Costs of an expert witness'].description")}
+      - "fee_deposition": ${yesno(fees['Depositions'].waive)}
+      - "fee_deposition_amount": ${currency(fees['Depositions'].amount) if (fees['Depositions'].waive and fees['Depositions'].amount) else ''}
+      - "fee_deposition_description": ${showifdef("fees['Depositions'].description")}
+      - "fee_recording": ${yesno(fees['recordings'].waive)}
+      - "fee_appeal_bond": ${yesno(fees['Appeal bond'].waive)}
+      - "fee_transcript": ${yesno(fees['transcript'].waive)}
+      - "fee_transcript_amount": ${currency(fees['transcript'].amount) if (fees['transcript'].waive and fees['transcript'].amount) else ''}
+      - "cost_other": ${yesno(fees['Other cost'].waive)}
+      - "cost_other_description": ${showifdef("fees['Other cost'].description")}
+      - "cost_other_amount": ${currency(fees['Other cost'].amount) if fees['Other cost'].waive and fees['Other cost'].amount  else ''}
+      - "user_signature": |
+          ${ users[0].signature }
+      - "date_signed": ${format_date(today())}
+---
+---
+reconsider: True
+attachment:
+  - name: affidavitofindigency
+    variable name: affidavitofindigency_preview
+    filename: affidavitofindigency
+    pdf template file: affidavitofindigency.pdf
+    editable: False
+    skip undefined: True
+    fields:
+      - "court": ${courts[0]}
+      - "docket_number": ${case_name + ' ' + docket_numbers[0]}
+      - "user_name_full": ${users[0]}
+      - "user_address_on_one_line": ${users[0].address.on_one_line()}
+      - "gets_public_benefits": ${yesno(public_assistance_kinds.any_true())}
+      - "Medicaid": ${yesno(public_assistance_kinds['Medicaid'])}
+      - "TAFDC": ${yesno(public_assistance_kinds['TAFDC'])}
+      - "SSI": ${yesno(public_assistance_kinds['SSI'])}
+      - "EAEDC": ${yesno(public_assistance_kinds['EAEDC'])}
+      - "VA": ${yesno(public_assistance_kinds['VA Benefits'])}
+      - "below_poverty_level": ${yesno(household_income_qualifies) if need_income else "No"}
+      - "weekly": ${weekly}
+      - "biweekly": ${biweekly}
+      - "monthly": ${monthly}
+      - "annually": ${annually}
+      - "income_amount": ${hh_income.amount(period_to_use=hh_income.period)}
+      - "household_additional_size": ${household_additional_size if need_income else ''}
+      - "household_size": ${household_size if need_income else ''}
+      - "other_income": ${'Included above' if need_income else ''}
+      - "unable_to_pay": ${noyes(can_afford) if (need_income and not household_income_qualifies) else 'No'}
+      - "fee_filing": ${fees['Filing fee'].waive}
+      - "fee_filing_amount": ${currency(fees['Filing fee'].amount) if fees['Filing fee'].amount else ''}
+      - "fee_appeal": ${yesno(fees['Appeal cost'].waive)}
+      - "fee_appeal_amount": ${currency(fees['Appeal cost'].amount) if fees['Appeal cost'].waive and fees['Appeal cost'].amount else ''}
+      - "fee_service": ${yesno(fees['Service'].waive)}
+      - "fee_service_amount": ${currency(fees['Service'].amount) if fees['Service'].waive and fees['Service'].amount else ""}
+      - "fee_other": ${yesno(fees['Other'].waive)}
+      - "fee_other_amount": ${currency(fees['Other'].amount) if fees['Other'].waive and fees['Other'].amount else ""}      
+      - "fee_other_description": ${showifdef("fees['Other'].description")}
+      - "fee_expert": ${yesno(fees['Costs of an expert witness'].waive)}
+      - "fee_expert_amount": ${currency(fees['Costs of an expert witness'].amount) if (fees['Costs of an expert witness'].waive and fees['Costs of an expert witness'].amount) else ''}
+      - "fee_expert_description": ${showifdef("fees['Costs of an expert witness'].description")}
+      - "fee_deposition": ${yesno(fees['Depositions'].waive)}
+      - "fee_deposition_amount": ${currency(fees['Depositions'].amount) if (fees['Depositions'].waive and fees['Depositions'].amount) else ''}
+      - "fee_deposition_description": ${showifdef("fees['Depositions'].description")}
+      - "fee_recording": ${yesno(fees['recordings'].waive)}
+      - "fee_appeal_bond": ${yesno(fees['Appeal bond'].waive)}
+      - "fee_transcript": ${yesno(fees['transcript'].waive)}
+      - "fee_transcript_amount": ${currency(fees['transcript'].amount) if (fees['transcript'].waive and fees['transcript'].amount) else ''}
+      - "cost_other": ${yesno(fees['Other cost'].waive)}
+      - "cost_other_description": ${showifdef("fees['Other cost'].description")}
+      - "cost_other_amount": ${currency(fees['Other cost'].amount) if fees['Other cost'].waive and fees['Other cost'].amount else ''}
+      - "date_signed": ${format_date(today())}
+---
+id: docket number
+question: |
+  Docket Number
+subquestion: |
+  If you know the docket number for this case, enter it below
+fields:
+  - I do not know the docket number: dont_know_docket_number
+    datatype: yesno
+  - Docket number: docket_numbers[0]
+    show if:  
+      variable: dont_know_docket_number
+      is: False
+  - What case do you want fees waived for? Briefly explain how the clerk can find your case.: docket_numbers[0]
+    show if: dont_know_docket_number
+    maxlength: 25
+help:
+  label: |
+    What's a docket number?
+  content: |
+    The docket number is a number that the court assigns to track your case.
+    
+    If this is a **new** case, you may not have one yet. You can leave
+    this blank if you're not sure.
+validation code: |
+  docket_numbers.there_is_another = False
+---
+id: user role
+question: |
+  Did you file the first forms in this case, or are you responding to a case
+  that someone else started?
+#fields: 
+#  - no label: user_ask_role
+#    datatype: radio
+#    choices:
+#      - I am starting a new case: plaintiff
+#      - I am responding to a case started by someone else: defendant  
+fields: 
+  - no label: user_ask_role
+    datatype: radio
+    choices:
+      - Starting a new case: plaintiff
+      - Responding to a case: defendant
+  - note: |
+      Okay, you are the **Plaintiff** or Petitioner in this case. The other 
+      side is the **Defendant** or Respondent.
+    show if:
+      variable: user_ask_role
+      is: "plaintiff"
+  - note: |
+      Okay, you are the **Defendant** or Respondent in this case. The other 
+      side is the **Plaintiff** or Petitioner.
+    show if:
+      variable: user_ask_role
+      is: "defendant"
+help:
+  label: |
+    How do I know?
+  content: |
+    We need to know if you are the "Plaintiff" or the "Defendant" in your
+    case.
+    
+    If you are the first person to file a form in the case, you are the
+    "Plaintiff" or the "Petitioner."
+  
+    If you are responding to a case or court papers someone else filed, you are
+    the "Defendant" or the "Respondent."
