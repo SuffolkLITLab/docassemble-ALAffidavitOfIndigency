@@ -8,6 +8,9 @@ metadata:
 code: |
   interview_short_title = "Ask the court to waive fees"
 ---
+code: |
+  affidavitofindigency_attachment.enabled = True
+---
 id: run main interview
 mandatory: True
 code: |

@@ -646,7 +646,7 @@ code: |
   filing_fees_amount = fees['Filing fee'].amount
 ---
 objects:
-  - affidavitofindigency_attachment: ALDocument.using(filename="affidavit_of_indigency", title="Affidavit of Indigency", enabled=True, has_addendum=False)
+  - affidavitofindigency_attachment: ALDocument.using(filename="affidavit_of_indigency", title="Affidavit of Indigency", has_addendum=False)
 ---
 attachment:
   - name: Affidavit of Indigency
