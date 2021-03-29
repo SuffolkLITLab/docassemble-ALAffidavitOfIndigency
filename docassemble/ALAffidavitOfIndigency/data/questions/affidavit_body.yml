@@ -1,17 +1,15 @@
 ---
 include:
-  - docassemble.MAVirtualCourt:basic-questions.yml
+  - docassemble.AssemblyLine:al_package.yml
+  - docassemble.MassAccess:massaccess.yml
   - docassemble.MAPovertyScale:poverty.yml
 ---
 modules:
   - docassemble.income.income
-  - docassemble.MACourts.macourts  
 ---
 objects:
   - hh_income: Job
   - fees: DADict.using(gathered=True, auto_gather=False, object_type=DAObject)
-#  - court: MACourt
-#  - macourts: MACourtList.using(courts=['housing_courts','bmc','district_courts','superior_courts', 'land_court','juvenile_courts','probate_and_family_courts'])
 ---
 id: affidavit prompts
 code: |
@@ -48,9 +46,7 @@ code: |
     tried_geolocating
     # local_housing_court
     all_matches
-    filtered
-    str(courts[0])
-
+    trial_court
     # show_court_information
 
     set_empty_fees
@@ -294,10 +290,6 @@ code: |
     case_name = str(plaintiffs) + ' v. ' + str(defendants)
   else:
     case_name = "In re " + str(users)
----
-code: |
-  all_matches = macourts.matching_courts(users[0].address, court_types=allowed_courts)
-  filtered = combined_locations(all_matches)
 ---
 code: |
   allowed_courts = [
@@ -612,103 +604,15 @@ help: |
 code: |
   users[0].address.geolocate()
   tried_geolocating = True
----      
-id: choose a court
-question: |
-  % if users==plaintiffs:
-  Which court are you filing in?
-  % else:
-  Which court was your case filed in?
-  % endif
-subquestion: |
-  % if len(all_matches) > 0:
-  Below is a map of the court(s) that serve the
-  address you gave us, ${users[0].address.on_one_line(include_unit=True)}.
-  
-  ${map_of(combined_locations(all_matches))}
-  
-  % else:
-  We didn't find any matching court(s) that serve
-  ${users[0].address.on_one_line()}.
-  % endif
-
-  Choose a court from the list below.
-fields:
-  - no label: courts[0]
-    datatype: object_radio
-    choices: all_matches
-    none of the above: True
-    disable others: True
-    object labeler: |
-      lambda y: '**' + str(y) +' (' + y.address.city + ')**' + '[BR]' + y.address.on_one_line() + '[BR]' + y.description
-    show if: 
-      code: |
-        len(all_matches)      
-  - note: |
-      Does the list above look wrong? If you think you should file in a
-      court we didn't list, select "None of the above" and choose from the
-      full list below.
-    show if: 
-      code: |
-        len(all_matches)
-  - no label: courts[0]
-    datatype: object
-    object labeler: |
-      lambda y: (str(y) +' (' + y.address.city + ')') if y.address.city not in str(y) else str(y)
-    choices: macourts    
-help: 
-  label: |
-    How do I pick a court?
-  content: |
-    If you are responding to a case someone else filed, you may not
-    get to choose your court. But if you are starting a new case, you have
-    a choice. How do you know which court to choose?
-  
-    Massachusetts has 7 trial court departments:
-    
-    * District Court
-    * Boston Municipal Court (BMC)
-    * Superior Court
-    * Housing Court
-    * Probate and Family Court
-    * Juvenile Court
-    * Land Court
-    
-    The District Court, BMC, and Superior Court are all courts that can hear any
-    type of case. The Land Court, Probate and Family, Juvenile Court, and
-    Housing Court are all **specialist** courts that hear one kind of case. They
-    may have judges with special training as well as special resources
-    available.
-    
-    For example, the Housing Court has trained mediators, a special program for
-    tenants with disabilities, and legal help available on-site on the day that
-    eviction hearings are held.
-    
-    Different courts can make different kinds of decisions. Not every court can
-    give you every kind of help. For example, you cannot file a housing
-    discrimination case in the District Court. You can only ask for visitation
-    in the Probate and Family Court.
-    
-    Depending on where you live, different courts may be further or closer to
-    your address. There are about 100 district courts all over the state, but
-    each county has only one or a few Superior Courts or specialty courts.
-    
-    Choosing a court means thinking about what kind of help you need, as well as
-    which court you can get transportation to on the day of your hearing.
-    
-    Only you know the right choice.
-    
-    You can also view the court selection guidance at
-    [mass.gov](https://www.mass.gov/courthouse-locator).
 ---
 id: show_court_information
 continue button field: show_court_information
 question: |
   If you need to, call the court
 subquestion: |
-  The clerk for the ${courts[0]} can be called at:
+  The clerk for the ${trial_court} can be called at:
   
-  ${ courts[0].phone }
+  ${ trial_court.phone }
 ---
 code: |
   if url_args.get('recipient_email'):
@@ -741,19 +645,18 @@ code: |
   # filing_fees_amount = fees['E-filing'].amount + fees['Filing fee'].amount if defined("fees['Filing fee'].amount") and fees['Filing fee'].waive else fees['E-filing'].amount
   filing_fees_amount = fees['Filing fee'].amount
 ---
-code: |
-  form_to_file_no_cover = affidavitofindigency_attachment
+objects:
+  - affidavitofindigency_attachment: ALDocument.using(filename="affidavit_of_indigency", title="Affidavit of Indigency", enabled=True, has_addendum=False)
 ---
-reconsider: True
 attachment:
   - name: Affidavit of Indigency
-    variable name: affidavitofindigency_attachment
+    variable name: affidavitofindigency_attachment[i]
     filename: affidavitofindigency
     pdf template file: affidavitofindigency.pdf
     editable: False
     skip undefined: True
     fields:
-      - "court": ${courts[0]}
+      - "court": ${trial_court}
       - "docket_number": ${case_name + ' ' + str(docket_numbers[0])}
       - "user_name_full": ${users[0]}
       - "user_address_on_one_line": ${users[0].address.on_one_line()}
@@ -796,61 +699,7 @@ attachment:
       - "cost_other_description": ${showifdef("fees['Other cost'].description")}
       - "cost_other_amount": ${currency(fees['Other cost'].amount) if fees['Other cost'].waive and fees['Other cost'].amount  else ''}
       - "user_signature": |
-          ${ users[0].signature }
-      - "date_signed": ${format_date(today())}
----
----
-reconsider: True
-attachment:
-  - name: affidavitofindigency
-    variable name: affidavitofindigency_preview
-    filename: affidavitofindigency
-    pdf template file: affidavitofindigency.pdf
-    editable: False
-    skip undefined: True
-    fields:
-      - "court": ${courts[0]}
-      - "docket_number": ${case_name + ' ' + docket_numbers[0]}
-      - "user_name_full": ${users[0]}
-      - "user_address_on_one_line": ${users[0].address.on_one_line()}
-      - "gets_public_benefits": ${yesno(public_assistance_kinds.any_true())}
-      - "Medicaid": ${yesno(public_assistance_kinds['Medicaid'])}
-      - "TAFDC": ${yesno(public_assistance_kinds['TAFDC'])}
-      - "SSI": ${yesno(public_assistance_kinds['SSI'])}
-      - "EAEDC": ${yesno(public_assistance_kinds['EAEDC'])}
-      - "VA": ${yesno(public_assistance_kinds['VA Benefits'])}
-      - "below_poverty_level": ${yesno(household_income_qualifies) if need_income else "No"}
-      - "weekly": ${weekly}
-      - "biweekly": ${biweekly}
-      - "monthly": ${monthly}
-      - "annually": ${annually}
-      - "income_amount": ${hh_income.amount(period_to_use=hh_income.period)}
-      - "household_additional_size": ${household_additional_size if need_income else ''}
-      - "household_size": ${household_size if need_income else ''}
-      - "other_income": ${'Included above' if need_income else ''}
-      - "unable_to_pay": ${noyes(can_afford) if (need_income and not household_income_qualifies) else 'No'}
-      - "fee_filing": ${fees['Filing fee'].waive}
-      - "fee_filing_amount": ${currency(fees['Filing fee'].amount) if fees['Filing fee'].amount else ''}
-      - "fee_appeal": ${yesno(fees['Appeal cost'].waive)}
-      - "fee_appeal_amount": ${currency(fees['Appeal cost'].amount) if fees['Appeal cost'].waive and fees['Appeal cost'].amount else ''}
-      - "fee_service": ${yesno(fees['Service'].waive)}
-      - "fee_service_amount": ${currency(fees['Service'].amount) if fees['Service'].waive and fees['Service'].amount else ""}
-      - "fee_other": ${yesno(fees['Other'].waive)}
-      - "fee_other_amount": ${currency(fees['Other'].amount) if fees['Other'].waive and fees['Other'].amount else ""}      
-      - "fee_other_description": ${showifdef("fees['Other'].description")}
-      - "fee_expert": ${yesno(fees['Costs of an expert witness'].waive)}
-      - "fee_expert_amount": ${currency(fees['Costs of an expert witness'].amount) if (fees['Costs of an expert witness'].waive and fees['Costs of an expert witness'].amount) else ''}
-      - "fee_expert_description": ${showifdef("fees['Costs of an expert witness'].description")}
-      - "fee_deposition": ${yesno(fees['Depositions'].waive)}
-      - "fee_deposition_amount": ${currency(fees['Depositions'].amount) if (fees['Depositions'].waive and fees['Depositions'].amount) else ''}
-      - "fee_deposition_description": ${showifdef("fees['Depositions'].description")}
-      - "fee_recording": ${yesno(fees['recordings'].waive)}
-      - "fee_appeal_bond": ${yesno(fees['Appeal bond'].waive)}
-      - "fee_transcript": ${yesno(fees['transcript'].waive)}
-      - "fee_transcript_amount": ${currency(fees['transcript'].amount) if (fees['transcript'].waive and fees['transcript'].amount) else ''}
-      - "cost_other": ${yesno(fees['Other cost'].waive)}
-      - "cost_other_description": ${showifdef("fees['Other cost'].description")}
-      - "cost_other_amount": ${currency(fees['Other cost'].amount) if fees['Other cost'].waive and fees['Other cost'].amount else ''}
+          ${ users[0].signature if i=='final' else '' }
       - "date_signed": ${format_date(today())}
 ---
 id: docket number

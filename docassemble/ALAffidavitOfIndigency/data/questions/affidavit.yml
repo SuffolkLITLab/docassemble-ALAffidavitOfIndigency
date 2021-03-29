@@ -11,7 +11,7 @@ code: |
 id: run main interview
 mandatory: True
 code: |
-  basic_questions_intro_screen
+  al_intro_screen
   aff_of_indigency_intro
   affidavit_match_to_case_prompts # Make sure people give a docket number
   ask_affidavit_questions # Main questions
@@ -29,7 +29,7 @@ subquestion: |
   Click the image below to open a preview of your document in a new
   window. On the next screen, you will have a chance to sign it.
 
-  ${affidavitofindigency_preview}
+  ${ al_user_bundle.as_pdf(key='preview') }
 
   ${action_button_html(url_action('review_all_sections'), icon='edit', label=word("Make Changes"), size="sm")}
   
@@ -52,6 +52,9 @@ subquestion: |
   * [Edit income](${url_action("hh_income.value")})
   * [Edit inability to pay](${url_action("can_afford")})
 ---
+# TODO: this is ONLY for inclusion in other docs for now,
+# so I am disabling the send to court button. Quinten S
+# IF you want to turn on, need to handle migrating other variables too
 id: final download
 decoration: file-download
 question: |
@@ -65,11 +68,11 @@ subquestion: |
   Thank you ${users[0]}. Your form is ready to send to the court. **It is not
   delivered until you complete the delivery process below.**
 
-  1. Click the preview image below to open the form in a new window. Correct any errors using the "Make changes" button below.
+  1. Click the "view" button below to open the form in a new window. Correct any errors using the "Make changes" button below.
   1. Download and save or print a copy of this form for your 
   records.
-  1. If you need to call the court, you can call ${courts[0]} at ${courts[0].phone}.
-  1. Click the "Submit to ${courts[0]}" button to send it to the court. 
+  1. If you need to call the court, you can call ${trial_court} at ${trial_court.phone}.
+  1. Click the "Submit to ${trial_court}" button to send it to the court. 
   1. You will have a chance to add instructions to the clerk and see the cover page before final delivery.
   % else:
   If you do not hear from the court in 1 business day, call the Trial Court’s
@@ -80,20 +83,24 @@ subquestion: |
   Monday - Friday.
   % endif
   
-  ${ form_to_file_no_cover }  
+  ${ al_user_bundle.download_list_html(key='final') }  
   
   ${action_button_html(url_action('review_all_sections'), icon='edit', label=word("Make changes"))}
   
-  % if not defined('email_success') or not email_success:
-    ${ action_button_html( url_action('form_delivery_complete'), id_tag="submitToCourt", label="Submit to " + str(courts[0].name), icon=send_icon, size="md", color="primary")}
+  % if False: # not defined('email_success') or not email_success:
+    ${ action_button_html( url_action('form_delivery_complete'), id_tag="submitToCourt", label="Submit to " + str(trial_court), icon=send_icon, size="md", color="primary")}
     
-  Or download/email below:
-  % else:
-    Your email has already been delivered to ${courts[0]}
+  % elif False: # else:
+    Your email has already been delivered to ${trial_court}
     
   [:file-download: Download with cover page](${final_form_to_file.url_for()})    
   % endif
+  
+  ${ al_user_bundle.send_button_html() }
 progress: 100
-attachment code: form_to_file_no_cover
 section: download
 event: download
+---
+objects:
+  - al_user_bundle: ALDocumentBundle.using(elements=[affidavitofindigency_attachment], filename="affidavit_of_indigency.pdf", title="All forms to download for your records")
+  - al_court_bundle: ALDocumentBundle.using(elements=[affidavitofindigency_attachment], filename="affidavit_of_indigency.pdf", title="All forms to download for your records")
