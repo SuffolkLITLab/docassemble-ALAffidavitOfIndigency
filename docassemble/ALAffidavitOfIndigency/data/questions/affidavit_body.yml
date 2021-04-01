@@ -503,8 +503,6 @@ subquestion: |
 
   ${action_button_html(url_action("fees['Filing fee'].waive"))}
   
-  On the next screens, you will provide your name, address, and signature.
-  
 continue button field: fees_interstitial
 ---
 id: qualify on face
