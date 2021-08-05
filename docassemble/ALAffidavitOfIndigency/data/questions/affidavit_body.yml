@@ -646,6 +646,12 @@ code: |
 objects:
   - affidavitofindigency_attachment: ALDocument.using(filename="affidavit_of_indigency", title="Affidavit of Indigency", has_addendum=False)
 ---
+code: |
+  if al_form_type == "appeal":
+    affidavit_of_indigency_filing_court = showifdef('appeals_court', trial_court)
+  else:
+    affidavit_of_indigency_filing_court = trial_court
+---
 attachment:
   - name: Affidavit of Indigency
     variable name: affidavitofindigency_attachment[i]
@@ -654,7 +660,7 @@ attachment:
     editable: False
     skip undefined: True
     fields:
-      - "court": ${trial_court}
+      - "court": ${ affidavit_of_indigency_filing_court }
       - "docket_number": ${case_name + ' ' + str(docket_numbers[0])}
       - "user_name_full": ${users[0]}
       - "user_address_on_one_line": ${users[0].address.on_one_line()}
