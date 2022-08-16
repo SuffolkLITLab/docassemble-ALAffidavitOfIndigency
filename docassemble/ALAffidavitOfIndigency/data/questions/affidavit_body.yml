@@ -201,37 +201,9 @@ subquestion: |
   Is anyone else on your side of this case?
 yesno: users.there_is_another 
 ---
-id: other users names
-question: |
-  What is the name of the ${ ordinal(i) } person on your side of the case?
-fields:
-  - First Name: users[i].name.first
-  - Middle Name: users[i].name.middle
-    required: False
-  - Last Name: users[i].name.last
-  - Suffix: users[i].name.suffix
-    required: False
-    code: |
-      name_suffix()
----      
-id: other users there are any
-question: |
-  % if users == plaintiffs:
-  Is there a **defendant** or respondent in this case? 
-  % else:
-  Is there a **plaintiff** or petitioner in this case?
-  % endif
-subquestion: |
-  % if users == plaintiffs:
-  Answer yes if there is a person or organization you are suing or taking to court.
-  % else:
-  You should be able to find out from the paperwork that told you to 
-  go to court.
-  
-  Answer yes if someone else has sued you or is bringing you to court.
-  % endif
-yesno: other_parties.there_are_any
----
+comment: |
+  Can't use the standard `name_fields()`, because list collect doesn't let you
+  use Mako, which presumably setting `fields` to code does.
 id: names of opposing parties
 question: |
   % if users==plaintiffs:
@@ -242,6 +214,8 @@ question: |
   % endif
 subquestion: |
   Click "${word("Add another")}" to add more.
+  
+  ---
 list collect: 
   enable: True
   label: |
@@ -687,43 +661,3 @@ help:
 validation code: |
   docket_numbers.there_is_another = False
 ---
-id: user role
-question: |
-  Did you file the first forms in this case, or are you responding to a case
-  that someone else started?
-#fields: 
-#  - no label: user_ask_role
-#    datatype: radio
-#    choices:
-#      - I am starting a new case: plaintiff
-#      - I am responding to a case started by someone else: defendant  
-fields: 
-  - no label: user_ask_role
-    datatype: radio
-    choices:
-      - Starting a new case: plaintiff
-      - Responding to a case: defendant
-  - note: |
-      Okay, you are the **Plaintiff** or Petitioner in this case. The other 
-      side is the **Defendant** or Respondent.
-    show if:
-      variable: user_ask_role
-      is: "plaintiff"
-  - note: |
-      Okay, you are the **Defendant** or Respondent in this case. The other 
-      side is the **Plaintiff** or Petitioner.
-    show if:
-      variable: user_ask_role
-      is: "defendant"
-help:
-  label: |
-    How do I know?
-  content: |
-    We need to know if you are the "Plaintiff" or the "Defendant" in your
-    case.
-    
-    If you are the first person to file a form in the case, you are the
-    "Plaintiff" or the "Petitioner."
-  
-    If you are responding to a case or court papers someone else filed, you are
-    the "Defendant" or the "Respondent."
