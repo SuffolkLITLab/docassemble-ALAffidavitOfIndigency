@@ -43,7 +43,7 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
     return out
 
 setup(name='docassemble.ALAffidavitOfIndigency',
-      version='2.0.4',
+      version='2.0.5',
       description=('A docassemble extension.'),
       long_description='Forked from https://github.com/SuffolkLITLab/docassemble-AffidavitofIndigencyMAVC to migrate to the ALDocument class',
       long_description_content_type='text/markdown',
