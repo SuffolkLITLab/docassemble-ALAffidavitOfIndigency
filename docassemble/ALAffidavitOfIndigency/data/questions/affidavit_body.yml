@@ -46,8 +46,7 @@ code: |
     tried_geolocating
     # local_housing_court
     all_matches
-    trial_court
-    # show_court_information
+    affidavit_of_indigency_filing_court
 
     set_empty_fees
     # trigger other computed values
@@ -57,6 +56,16 @@ code: |
 ---
 code: |
   is_indigent = public_assistance_kinds.any_true() or household_income_qualifies or not can_afford
+---
+depends on:
+  - public_assistance_kinds
+  - household_income_qualifies
+  - can_afford
+code: |
+  need_supplement = not public_assistance_kinds.any_true() and not household_income_qualifies and not can_afford
+---
+code: |
+  need_income = not public_assistance_kinds.any_true()
 ---
 id: intro
 question: |
@@ -169,19 +178,20 @@ buttons:
   - Exit: exit
     url: https://massaccess.suffolklitlab.org
 ---
-reconsider: True
+depends on:
+  - additional_income_allowed
+  - household_monthly_income
 code: |
-  additional_income_allowed = household_size * poverty_increment
+  additional_income_allowed = max(household_size() - 1, 0) * poverty_increment
   household_income_limit = (poverty_base + additional_income_allowed) * poverty_multiplier
 
-  household_income_qualifies = int((household_income_limit)/12) >=  int(household_monthly_income)
----
-reconsider: True
-code: |
-  household_size = household_additional_size + 1 if has_household_members else 1
+  household_income_qualifies = int((household_income_limit)/12) >=  int(hh_income.amount(period_to_use=12))
 ---
 code: |
-  household_monthly_income = hh_income.amount(period_to_use=12)
+  def household_size():
+    if public_assistance_kinds.any_true():
+      return DAEmpty()
+    return household_additional_size + 1 if has_household_members else 1
 ---
 id: any other users
 question: |
@@ -287,7 +297,6 @@ code: |
   if public_assistance_kinds.any_true():
     hh_income = DAEmpty()
     household_additional_size = DAEmpty()
-    household_size = DAEmpty()
   set_empty_income = True
 ---
 id: user benefits
@@ -342,7 +351,9 @@ subquestion: |
   Answer yes if you can afford the costs. Answer no if you either can't afford the costs, or can't
   afford to do so without depriving yourself
   or your dependents of the necessities of life, including food, shelter and clothing
-yesno: can_afford
+fields:
+  - I can afford the costs: can_afford
+    datatype: yesnoradio
 ---
 id: user does not qualify
 event: doesnt_qualify_ending
@@ -354,7 +365,7 @@ subquestion: |
   
   1. You receive public assistance
   1. Your income is below 125% of the Federal Poverty Level. For your household
-     of ${household_size}, the limit is ${currency(household_income_limit/12)} per month. However, you told us your income is ${currency(hh_income.amount(period_to_use=12))} per month.
+     of ${household_size()}, the limit is ${currency(household_income_limit/12)} per month. However, you told us your income is ${currency(hh_income.amount(period_to_use=12))} per month.
   1. You must be unable to afford to pay the costs, or unable to do so without depriving you or your dependents the necessities of life, including food, shelter, and clothing. You said you are able to pay the costs.
 ---
 ---
@@ -367,7 +378,7 @@ subquestion: |
   
   1. You receive public assistance
   1. Your income is below 125% of the Federal Poverty Level. For your household
-     of ${household_size}, the limit is ${currency(household_income_limit/12)} per month. However, you told us your income is ${currency(hh_income.amount(period_to_use=12))} per month.
+     of ${household_size()}, the limit is ${currency(household_income_limit/12)} per month. However, you told us your income is ${currency(hh_income.amount(period_to_use=12))} per month.
   1. You must be unable to afford to pay the costs, or unable to do so without depriving you or your dependents the necessities of life, including food, shelter, and clothing. You said you are able to pay the costs.
 ---
 id: select fees waived
@@ -482,7 +493,7 @@ continue button field: fees_interstitial
 id: qualify on face
 continue button field: qualify_interstitial
 question: |
-  % if not public_assistance_kinds.any_true() and not household_income_qualifies and not can_afford:
+  % if need_supplement:
   You need to submit a supplemental affidavit to learn if you qualify
   % else:
   Based on your answers, it looks like you qualify for a fee waiver
@@ -502,7 +513,7 @@ subquestion: |
   You said that your ${income_period(hh_income.period).lower()} income
   is ${currency(hh_income.amount(period_to_use=hh_income.period))}.
   
-  The limit for a household of ${nice_number(household_size)} is 125% of
+  The limit for a household of ${nice_number(household_size())} is 125% of
   the poverty level, or ${currency(household_income_limit/hh_income.period)}.
   % elif not can_afford:
   You told us that you can't afford to pay the fees and pay for the necessities
@@ -518,7 +529,8 @@ subquestion: |
   On the next screen, we'll ask you about the specific fees you want waived.
 help: |
   If you get certain public benefits, or if you earn less than 125% of 
-  the federal poverty level, the law says that you qualify for a fee waiver.
+  the federal poverty level (${ currency(household_income_limit)}
+  a year for a household of ${ nice_number(household_size()) }), the law says that you qualify for a fee waiver.
   If you earn more than that but still cannot afford to pay the costs
   of going to court, you need to give the court more information. If the 
   court agrees, they may waive your court costs. It is up to a judge to 
@@ -556,9 +568,6 @@ code: |
     recipient_email = ""
 ---
 code: |
-  need_income = not public_assistance_kinds.any_true()
----
-code: |
   if not (hh_income.period in [52,26,12,1]):
     monthly_income = hh_income.amount(period_to_use=12)
     hh_income.period = 12
@@ -590,7 +599,7 @@ attachment:
     skip undefined: True
     fields:
       - "court": ${ affidavit_of_indigency_filing_court }
-      - "docket_number": ${case_name + ' ' + str(docket_numbers[0])}
+      - "docket_number": ${case_name + '; ' + str(docket_numbers[0])}
       - "user_name_full": ${users[0]}
       - "user_address_on_one_line": ${users[0].address.on_one_line()}
       - "gets_public_benefits": ${yesno(public_assistance_kinds.any_true())}
@@ -606,9 +615,9 @@ attachment:
       - "annually": ${annually}
       - "income_amount": ${hh_income.amount(period_to_use=hh_income.period)}
       - "household_additional_size": ${household_additional_size if need_income else ''}
-      - "household_size": ${household_size if need_income else ''}
+      - "household_size": ${household_size() if need_income else ''}
       - "other_income": ${'Included above' if need_income else ''}
-      - "unable_to_pay": ${noyes(can_afford) if (need_income and not household_income_qualifies) else 'No'}
+      - "unable_to_pay": ${yesno(need_supplement)}
       - "fee_filing": ${fees['Filing fee'].waive}
       - "fee_filing_amount": ${currency(fees['Filing fee'].amount) if fees['Filing fee'].amount else ''}
       - "fee_appeal": ${yesno(fees['Appeal cost'].waive)}
@@ -649,6 +658,7 @@ fields:
       is: False
   - What case do you want fees waived for? Briefly explain how the clerk can find your case.: docket_numbers[0]
     show if: dont_know_docket_number
+    required: False
     maxlength: 25
 help:
   label: |
