@@ -2,10 +2,10 @@
 include:
   - docassemble.AssemblyLine:al_package.yml
   - docassemble.MassAccess:massaccess.yml
-  - docassemble.MAPovertyScale:poverty.yml
 ---
 modules:
   - docassemble.income.income
+  - docassemble.PovertyScale.poverty
 ---
 objects:
   - hh_income: Job
@@ -31,7 +31,7 @@ code: |
   other_parties.gather()
   case_name
   public_assistance_kinds
-  if not public_assistance_kinds.any_true():
+  if public_assistance_kinds.all_false():
     has_household_members
     if not household_income_qualifies:
       can_afford
@@ -54,6 +54,10 @@ code: |
     annually
   ask_affidavit_questions = True
 ---
+depends on:
+  - public_assistance_kinds
+  - household_income_qualifies
+  - can_afford
 code: |
   is_indigent = public_assistance_kinds.any_true() or household_income_qualifies or not can_afford
 ---
@@ -64,8 +68,10 @@ depends on:
 code: |
   need_supplement = not public_assistance_kinds.any_true() and not household_income_qualifies and not can_afford
 ---
+depends on:
+  - public_assistance_kinds
 code: |
-  need_income = not public_assistance_kinds.any_true()
+  need_income = public_assistance_kinds.all_false()
 ---
 id: intro
 question: |
@@ -179,19 +185,23 @@ buttons:
     url: https://massaccess.suffolklitlab.org
 ---
 depends on:
-  - additional_income_allowed
-  - household_monthly_income
+  - hh_income
+  - household_size
 code: |
-  additional_income_allowed = max(household_size() - 1, 0) * poverty_increment
-  household_income_limit = (poverty_base + additional_income_allowed) * poverty_multiplier
-
-  household_income_qualifies = int((household_income_limit)/12) >=  int(hh_income.amount(period_to_use=12))
+  household_income_limit = poverty_scale_get_income_limit(household_size=household_size, multiplier=1.25)
+  household_income_qualifies = poverty_scale_income_qualifies(hh_income.amount(period_to_use=12), household_size=household_size, multiplier=1.25)
 ---
+depends on:
+  - household_additional_size
+  - has_household_members
+  - public_assistance_kinds
+only sets:
+  - household_size
 code: |
-  def household_size():
     if public_assistance_kinds.any_true():
-      return DAEmpty()
-    return household_additional_size + 1 if has_household_members else 1
+      household_size = DAEmpty()
+    else:
+      household_size = household_additional_size + 1 if has_household_members else 1
 ---
 id: any other users
 question: |
@@ -208,8 +218,9 @@ subquestion: |
   next.
   % endif
   
-  Is anyone else on your side of this case?
-yesno: users.there_is_another 
+fields:
+  - Is anyone else on your side of the case?: users.there_is_another
+    datatype: yesnoradio
 ---
 comment: |
   Can't use the standard `name_fields()`, because list collect doesn't let you
@@ -293,6 +304,8 @@ code: |
       fees[fee] = DAEmpty()
   set_empty_fees = True
 ---
+depends on:
+  - public_assistance_kinds
 code: |
   if public_assistance_kinds.any_true():
     hh_income = DAEmpty()
@@ -365,7 +378,7 @@ subquestion: |
   
   1. You receive public assistance
   1. Your income is below 125% of the Federal Poverty Level. For your household
-     of ${household_size()}, the limit is ${currency(household_income_limit/12)} per month. However, you told us your income is ${currency(hh_income.amount(period_to_use=12))} per month.
+     of ${household_size}, the limit is ${currency(household_income_limit/12)} per month. However, you told us your income is ${currency(hh_income.amount(period_to_use=12))} per month.
   1. You must be unable to afford to pay the costs, or unable to do so without depriving you or your dependents the necessities of life, including food, shelter, and clothing. You said you are able to pay the costs.
 ---
 ---
@@ -378,7 +391,7 @@ subquestion: |
   
   1. You receive public assistance
   1. Your income is below 125% of the Federal Poverty Level. For your household
-     of ${household_size()}, the limit is ${currency(household_income_limit/12)} per month. However, you told us your income is ${currency(hh_income.amount(period_to_use=12))} per month.
+     of ${household_size}, the limit is ${currency(household_income_limit/12)} per month. However, you told us your income is ${currency(hh_income.amount(period_to_use=12))} per month.
   1. You must be unable to afford to pay the costs, or unable to do so without depriving you or your dependents the necessities of life, including food, shelter, and clothing. You said you are able to pay the costs.
 ---
 id: select fees waived
@@ -513,7 +526,7 @@ subquestion: |
   You said that your ${income_period(hh_income.period).lower()} income
   is ${currency(hh_income.amount(period_to_use=hh_income.period))}.
   
-  The limit for a household of ${nice_number(household_size())} is 125% of
+  The limit for a household of ${nice_number(household_size)} is 125% of
   the poverty level, or ${currency(household_income_limit/hh_income.period)}.
   % elif not can_afford:
   You told us that you can't afford to pay the fees and pay for the necessities
@@ -529,8 +542,11 @@ subquestion: |
   On the next screen, we'll ask you about the specific fees you want waived.
 help: |
   If you get certain public benefits, or if you earn less than 125% of 
-  the federal poverty level (${ currency(household_income_limit)}
-  a year for a household of ${ nice_number(household_size()) }), the law says that you qualify for a fee waiver.
+  the federal poverty level${ "," if need_income else ""}
+  % if need_income:
+  (${ currency(household_income_limit)} a year for a household of ${ nice_number(household_size) }),
+  % endif
+  the law says that you qualify for a fee waiver.
   If you earn more than that but still cannot afford to pay the costs
   of going to court, you need to give the court more information. If the 
   court agrees, they may waive your court costs. It is up to a judge to 
@@ -615,31 +631,31 @@ attachment:
       - "annually": ${annually}
       - "income_amount": ${hh_income.amount(period_to_use=hh_income.period)}
       - "household_additional_size": ${household_additional_size if need_income else ''}
-      - "household_size": ${household_size() if need_income else ''}
+      - "household_size": ${household_size if need_income else ''}
       - "other_income": ${'Included above' if need_income else ''}
       - "unable_to_pay": ${yesno(need_supplement)}
       - "fee_filing": ${fees['Filing fee'].waive}
-      - "fee_filing_amount": ${currency(fees['Filing fee'].amount) if fees['Filing fee'].amount else ''}
+      - "fee_filing_amount": ${thousands(fees['Filing fee'].amount, show_decimals=True) if fees['Filing fee'].amount else ''}
       - "fee_appeal": ${yesno(fees['Appeal cost'].waive)}
-      - "fee_appeal_amount": ${currency(fees['Appeal cost'].amount) if fees['Appeal cost'].waive and fees['Appeal cost'].amount else ''}
+      - "fee_appeal_amount": ${thousands(fees['Appeal cost'].amount, show_decimals=True) if fees['Appeal cost'].waive and fees['Appeal cost'].amount else ''}
       - "fee_service": ${yesno(fees['Service'].waive)}
-      - "fee_service_amount": ${currency(fees['Service'].amount) if fees['Service'].waive and fees['Service'].amount else ""}
+      - "fee_service_amount": ${thousands(fees['Service'].amount, show_decimals=True) if fees['Service'].waive and fees['Service'].amount else ""}
       - "fee_other": ${yesno(fees['Other'].waive)}
-      - "fee_other_amount": ${currency(fees['Other'].amount) if fees['Other'].waive and fees['Other'].amount else ""}      
+      - "fee_other_amount": ${thousands(fees['Other'].amount, show_decimals=True) if fees['Other'].waive and fees['Other'].amount else ""}      
       - "fee_other_description": ${showifdef("fees['Other'].description")}
       - "fee_expert": ${yesno(fees['Costs of an expert witness'].waive)}
-      - "fee_expert_amount": ${currency(fees['Costs of an expert witness'].amount) if (fees['Costs of an expert witness'].waive and fees['Costs of an expert witness'].amount) else ''}
+      - "fee_expert_amount": ${thousands(fees['Costs of an expert witness'].amount, show_decimals=True) if (fees['Costs of an expert witness'].waive and fees['Costs of an expert witness'].amount) else ''}
       - "fee_expert_description": ${showifdef("fees['Costs of an expert witness'].description")}
       - "fee_deposition": ${yesno(fees['Depositions'].waive)}
-      - "fee_deposition_amount": ${currency(fees['Depositions'].amount) if (fees['Depositions'].waive and fees['Depositions'].amount) else ''}
+      - "fee_deposition_amount": ${thousands(fees['Depositions'].amount, show_decimals=True) if (fees['Depositions'].waive and fees['Depositions'].amount) else ''}
       - "fee_deposition_description": ${showifdef("fees['Depositions'].description")}
       - "fee_recording": ${yesno(fees['recordings'].waive)}
       - "fee_appeal_bond": ${yesno(fees['Appeal bond'].waive)}
       - "fee_transcript": ${yesno(fees['transcript'].waive)}
-      - "fee_transcript_amount": ${currency(fees['transcript'].amount) if (fees['transcript'].waive and fees['transcript'].amount) else ''}
+      - "fee_transcript_amount": ${thousands(fees['transcript'].amount, show_decimals=True) if (fees['transcript'].waive and fees['transcript'].amount) else ''}
       - "cost_other": ${yesno(fees['Other cost'].waive)}
       - "cost_other_description": ${showifdef("fees['Other cost'].description")}
-      - "cost_other_amount": ${currency(fees['Other cost'].amount) if fees['Other cost'].waive and fees['Other cost'].amount  else ''}
+      - "cost_other_amount": ${thousands(fees['Other cost'].amount, show_decimals=True) if fees['Other cost'].waive and fees['Other cost'].amount  else ''}
       - "user_signature": |
           ${ users[0].signature if i=='final' else '' }
       - "date_signed": ${format_date(today())}
@@ -652,13 +668,14 @@ subquestion: |
 fields:
   - I do not know the docket number: dont_know_docket_number
     datatype: yesno
+    default: ${ "Yes" if case_new_or_existing == "new" else "" }
   - Docket number: docket_numbers[0]
     show if:  
       variable: dont_know_docket_number
       is: False
   - What case do you want fees waived for? Briefly explain how the clerk can find your case.: docket_numbers[0]
     show if: dont_know_docket_number
-    required: False
+    default: ${ "New case" if case_new_or_existing == "new" else "" }
     maxlength: 25
 help:
   label: |
@@ -666,8 +683,8 @@ help:
   content: |
     The docket number is a number that the court assigns to track your case.
     
-    If this is a **new** case, you may not have one yet. You can leave
-    this blank if you're not sure.
+    If this is a **new** case, you may not have one yet. You can tell the
+    clerk what you know about the case if you're not sure.
 validation code: |
   docket_numbers.there_is_another = False
 ---
