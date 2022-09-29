@@ -170,6 +170,7 @@ subquestion: |
   at the end of this online form.
   % endif
 ---
+id: exit can't pay back fees
 event: exit_cant_pay_back_fees
 question: |
   This form is not right for you
@@ -182,7 +183,7 @@ subquestion: |
 buttons:
   - Restart: restart
   - Exit: exit
-    url: https://massaccess.suffolklitlab.org
+    url: https://courtformsonline.org
 ---
 depends on:
   - hh_income
@@ -198,7 +199,7 @@ depends on:
 only sets:
   - household_size
 code: |
-    if public_assistance_kinds.any_true():
+    if not need_income:
       household_size = DAEmpty()
     else:
       household_size = household_additional_size + 1 if has_household_members else 1
@@ -241,7 +242,7 @@ list collect:
   enable: True
   label: |
     % if users==plaintiffs:
-    Defendant/Respondent ${i+1}    
+    Defendant/Respondent ${i+1}
     % else:
     Plaintiff/Petitioner ${i+1}
     % endif
@@ -257,15 +258,15 @@ fields:
       is: "individual"
   - Last name: other_parties[i].name.last
     show if:
-      variable: other_parties[i].person_type      
+      variable: other_parties[i].person_type
       is: "individual"
   - Suffix: other_parties[i].name.suffix
     code: |
       name_suffix()
     show if:
-      variable: other_parties[i].person_type      
+      variable: other_parties[i].person_type
       is: "individual"
-    required: False      
+    required: False
   - Name of organization or business: other_parties[i].name.first
     show if:
       variable: other_parties[i].person_type
@@ -315,7 +316,7 @@ code: |
 id: user benefits
 question: |
   Do you get any of these benefits?
-subquestion: |  
+subquestion: |
   Check any that apply
 fields:
   - no label: public_assistance_kinds
@@ -372,7 +373,7 @@ id: user does not qualify
 event: doesnt_qualify_ending
 question: |
   Sorry, it looks like you don't qualify
-decoration: hand-paper  
+decoration: hand-paper
 subquestion: |
   To qualify for a waiver of court costs, you must meet one of these:
   
