@@ -668,7 +668,7 @@ subquestion: |
 fields:
   - I do not know the docket number: dont_know_docket_number
     datatype: yesno
-    default: ${ "Yes" if case_new_or_existing == "new" else "" }
+    default: ${ case_new_or_existing == "new" }
   - Docket number: docket_numbers[0]
     show if:  
       variable: dont_know_docket_number
