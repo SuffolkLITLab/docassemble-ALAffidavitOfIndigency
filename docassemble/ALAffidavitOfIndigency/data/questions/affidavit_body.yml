@@ -228,7 +228,7 @@ comment: |
   use Mako, which presumably setting `fields` to code does.
 id: names of opposing parties
 question: |
-  % if users==plaintiffs:
+  % if user_role == "plaintiff":
   Please list the name of each **defendant** or respondent in this
   case below
   % else:
@@ -241,7 +241,7 @@ subquestion: |
 list collect: 
   enable: True
   label: |
-    % if users==plaintiffs:
+    % if user_role == "plaintiff":
     Defendant/Respondent ${i+1}
     % else:
     Plaintiff/Petitioner ${i+1}
