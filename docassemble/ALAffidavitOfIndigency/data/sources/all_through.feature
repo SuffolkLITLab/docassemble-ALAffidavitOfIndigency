@@ -43,6 +43,6 @@ Scenario: Standalone affidavit runs to completion
     | users[0].address.zip | 02125 | |
     | users[0].mobile_number | 1234567890 | |
     | trial_court | all_courts[80] | |
-    | signature_choice | this device | |
+    | signature_choice | this_device | |
     | users[0].signature | | |
   Then I should see the phrase "Your form is ready to print and deliver to the court"
