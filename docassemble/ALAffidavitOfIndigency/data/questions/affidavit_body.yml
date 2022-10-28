@@ -24,7 +24,7 @@ id: question order
 code: |
   # These should be all of the necessary questions, not just the 
   # intro screen/etc.
-  uesr_started_case
+  user_started_case
   users.gather()
   if len(users) > 1:
     explain_separate_affidavits
