@@ -16,15 +16,15 @@ code: |
   case_new_or_existing
   if case_new_or_existing == "back_fees":
     exit_cant_pay_back_fees
-  talk_to_court    
-  dont_know_docket_number 
+  talk_to_court
+  dont_know_docket_number
   affidavit_match_to_case_prompts = True
 ---
 id: question order
 code: |
   # These should be all of the necessary questions, not just the 
   # intro screen/etc.
-  user_role
+  uesr_started_case
   users.gather()
   if len(users) > 1:
     explain_separate_affidavits
@@ -35,7 +35,7 @@ code: |
     has_household_members
     if not household_income_qualifies:
       can_afford
-  if is_indigent:      
+  if is_indigent:
     qualify_interstitial
     fees['Filing fee'].waive
     fees['Costs of an expert witness'].waive
@@ -228,7 +228,7 @@ comment: |
   use Mako, which presumably setting `fields` to code does.
 id: names of opposing parties
 question: |
-  % if user_role == "plaintiff":
+  % if user_started_case:
   Please list the name of each **defendant** or respondent in this
   case below
   % else:
@@ -241,7 +241,7 @@ subquestion: |
 list collect: 
   enable: True
   label: |
-    % if user_role == "plaintiff":
+    % if user_started_case:
     Defendant/Respondent ${i+1}
     % else:
     Plaintiff/Petitioner ${i+1}
