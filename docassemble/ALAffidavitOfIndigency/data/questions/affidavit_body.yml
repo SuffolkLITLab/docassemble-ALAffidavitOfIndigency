@@ -619,7 +619,7 @@ attachment:
       - "docket_number": |
           ${case_name } 
           % if defined("docket_numbers"):
-          '; ' ${ docket_numbers[0] }
+          ;  ${ docket_numbers[0] }
           % elif defined("docket_number"):
         ;  ${ docket_number }
           % endif
