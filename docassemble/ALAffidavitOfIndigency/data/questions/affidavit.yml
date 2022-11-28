@@ -34,26 +34,7 @@ subquestion: |
 
   ${ al_user_bundle.as_pdf(key='preview') }
 
-  ${action_button_html(url_action('review_all_sections'), icon='edit', label=word("Make Changes"), size="sm")}
-  
----
-id: review form
-continue button field: review_all_sections
-continue button label: ${word("Resume")}
-question: |
-  Review your form
-subquestion: |
-  % if defined('form_delivery_complete'):
-  **Warning: your form has already been delivered.** Any changes you make
-  will _not_ be sent to the court.
-
-  % endif
-
-  * [Edit fees and costs](${url_action("fees['Filing fee'].waive")})
-  * [Edit name](${url_action("users[0].name.first")})
-  * [Edit public benefits](${url_action("public_assistance_kinds")})
-  * [Edit income](${url_action("hh_income.value")})
-  * [Edit inability to pay](${url_action("can_afford")})
+  ${action_button_html(url_action('review_fee_waiver'), icon='edit', label=word("Make Changes"), size="sm")}
 ---
 id: final download
 decoration: file-download
@@ -73,7 +54,7 @@ subquestion: |
   
   ${ al_user_bundle.download_list_html() }  
   
-  ${action_button_html(url_action('review_all_sections'), icon='edit', label=word("Make changes"))}
+  ${action_button_html(url_action('review_fee_waiver'), icon='edit', label=word("Make changes"))}
 
   ${ al_user_bundle.send_button_html() }
 progress: 100

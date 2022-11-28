@@ -689,3 +689,14 @@ help:
 validation code: |
   docket_numbers.there_is_another = False
 ---
+id: review fee waiver
+continue button field: review_fee_waiver
+continue button label: ${word("Resume")}
+question: |
+  Review your fee wiver
+subquestion: |
+  * [Edit fees and costs](${url_action("fees['Filing fee'].waive")})
+  * [Edit name](${url_action("users[0].name.first")})
+  * [Edit public benefits](${url_action("public_assistance_kinds")})
+  * [Edit income](${url_action("hh_income.value")})
+  * [Edit inability to pay](${url_action("can_afford")})  
