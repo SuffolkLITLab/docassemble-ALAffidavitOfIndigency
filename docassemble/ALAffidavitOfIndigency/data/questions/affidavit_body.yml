@@ -95,34 +95,37 @@ subquestion: |
   
   This form and all of your answers on it will be kept confidential
   (private). Only court staff will be able to see your completed form.
+
+  ${ collapse_template(what_kinds_of_fees_covered_template) }
 continue button field: aff_of_indigency_intro
-help: 
-  label: |
-    What kinds of fees can the court help me with?
-  content: |
-    The court can decide not to charge you costs that you would normally
-    pay to the court.
-    
-    For example:
-    
-    * Filing fees.
-    * Costs for recordings and transcripts of court hearings.
-    
-    It can also help you pay for certain things that you would pay to
-    someone else.
-    
-    For example:
-    
-    * The cost of serving a witness or the other party.
-    * Cost of taking a deposition.
-    * An appeal bond.
-    * Cost of an expert witness.
-    
-    If you ask for something else that is important for your trial,
-    the court may be able to pay for it. But it may not.
-    
-    You cannot use this form to ask the court to pay for an
-    attorney to represent you.
+---
+template: what_kinds_of_fees_covered_template
+subject: |
+  What kinds of fees can the court help me with?
+content: |
+  The court can decide not to charge you costs that you would normally
+  pay to the court.
+  
+  For example:
+  
+  * Filing fees.
+  * Costs for recordings and transcripts of court hearings.
+  
+  It can also help you pay for certain things that you would pay to
+  someone else.
+  
+  For example:
+  
+  * The cost of serving a witness or the other party.
+  * Cost of taking a deposition.
+  * An appeal bond.
+  * Cost of an expert witness.
+  
+  If you ask for something else that is important for your trial,
+  the court may be able to pay for it. But it may not.
+  
+  You cannot use this form to ask the court to pay for an
+  attorney to represent you.
 ---
 id: new or existing case
 question: |
@@ -540,8 +543,14 @@ subquestion: |
   later.
   % endif
   
+  ${ collapse_template(fee_waiver_help_template) }
+
   On the next screen, we'll ask you about the specific fees you want waived.
-help: |
+---
+template: fee_waiver_help_template
+subject: |
+  What are the rules for a fee waiver?
+content: |
   If you get certain public benefits, or if you earn less than 125% of 
   the federal poverty level${ "," if need_income else ""}
   % if need_income:
@@ -666,6 +675,8 @@ question: |
   Docket Number
 subquestion: |
   If you know the docket number for this case, enter it below
+
+  ${ collapse_template(fee_waiver_docket_number_explanation_template) }
 fields:
   - I do not know the docket number: dont_know_docket_number
     datatype: yesno
@@ -678,16 +689,17 @@ fields:
     show if: dont_know_docket_number
     default: ${ "New case" if case_new_or_existing == "new" else "" }
     maxlength: 25
-help:
-  label: |
-    What's a docket number?
-  content: |
-    The docket number is a number that the court assigns to track your case.
-    
-    If this is a **new** case, you may not have one yet. You can tell the
-    clerk what you know about the case if you're not sure.
 validation code: |
   docket_numbers.there_is_another = False
+---
+template: fee_waiver_docket_number_explanation_template
+subject: |
+  What's a docket number?
+content: |
+  The docket number is a number that the court assigns to track your case.
+  
+  If this is a **new** case, you may not have one yet. You can tell the
+  clerk what you know about the case if you're not sure.
 ---
 id: review fee waiver
 continue button field: review_fee_waiver
