@@ -97,7 +97,17 @@ subquestion: |
   (private). Only court staff will be able to see your completed form.
 
   ${ collapse_template(what_kinds_of_fees_covered_template) }
+
+  ${ collapse_template(what_if_i_need_help_template) }
 continue button field: aff_of_indigency_intro
+---
+template: what_if_i_need_help_template
+subject: |
+  What if I need more help?
+content: |
+  This website cannot provide you additional help. You may be able
+  to find a free attorney through legal aid by using the
+  [Legal Resource Finder](https://masslrf.org).
 ---
 template: what_kinds_of_fees_covered_template
 subject: |
