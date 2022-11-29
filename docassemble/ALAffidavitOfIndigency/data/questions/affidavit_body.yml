@@ -412,7 +412,10 @@ id: select fees waived
 question: |
   What fees do you need the court to waive or pay?
 subquestion: | 
-  If you're not sure yet, you can file another affidavit later.
+  You do not need to list every cost right now. You can file a separate fee waiver request for
+  fees that come up later in your case.
+
+  ${ collapse_template(what_fee_amount_should_i_write_template) }
   
   Check the boxes that you need below.
 fields:
@@ -497,6 +500,24 @@ fields:
 validation code: |
   if len([fee for fee in fees if fees[fee].waive]) < 1:
     validation_error("You need to choose at least one.", field="fees['Other cost'].waive")
+---
+template: what_fee_amount_should_i_write_template
+subject: |
+  What amount should I write in?
+content: |
+  If you are not sure of the exact amount yet, it is OK to leave it blank. You can 
+  also write your best guess. For common fees, the court clerk may know the amount and 
+  can fill it in for you.
+
+  You may also be able to find the fee by visiting the court's website:
+  
+  * [List of filing fees in Massachusetts](https://www.mass.gov/info-details/uniform-schedule-of-fees).
+
+  It usually costs about $40 to serve a document on the opposing party, either by using the Sherrif or
+  a constable.
+
+  If you are asking for something special to your circumstances, it may help the court decide
+  if you research the exact fee amount.
 ---
 id: summary of fees
 question: |
