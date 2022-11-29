@@ -625,7 +625,13 @@ attachment:
     skip undefined: True
     fields:
       - "court": ${ affidavit_of_indigency_filing_court }
-      - "docket_number": ${case_name + '; ' + str(docket_numbers[0])}
+      - "docket_number": |
+          ${case_name } 
+          % if defined("docket_numbers"):
+          ;  ${ docket_numbers[0] }
+          % elif defined("docket_number"):
+          ;  ${ docket_number }
+          % endif
       - "user_name_full": ${users[0]}
       - "user_address_on_one_line": ${users[0].address.on_one_line()}
       - "gets_public_benefits": ${yesno(public_assistance_kinds.any_true())}
