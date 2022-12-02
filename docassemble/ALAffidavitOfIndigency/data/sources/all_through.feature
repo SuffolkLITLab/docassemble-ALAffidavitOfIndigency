@@ -20,7 +20,7 @@ Scenario: Standalone affidavit kicks out if for old cost
 
 @alaffidavit @aaoi3
 Scenario: Standalone affidavit runs to completion
-  Given the max seconds for each Step is 30
+  Given the max seconds for each Step is 50
   And I start the interview at "affidavit.yml"
   And I get to the question id "final download" with this data:
     | var | value | trigger |
