@@ -1,0 +1,1010 @@
+---
+include:
+  - docassemble.AssemblyLine:assembly_line.yml
+  - docassemble.ALMassachusetts:al_massachusetts.yml
+  - docassemble.MassAccess:massaccess.yml
+  - docassemble.ALToolbox:al_income.yml
+---
+modules:
+  - docassemble.PovertyScale.poverty
+---
+mandatory: True
+comment: |
+  Global interview metadata
+variable name: interview_metadata["affidavit_of_indigency_supplement"]
+data:
+  al_weaver_version: "playground"
+  generated on: "2022-08-23"
+  title: >-
+    Supplement to the Affidavit of Indigency
+  short title: >-
+    Affidavit of Indigency Supplement
+  description: |-
+    A supplement to the Affidavit of Indigency, giving the court detailed information about finances
+  original_form: >-
+    https://www.mass.gov/doc/supplement-to-the-affidavit-of-indigency/download
+  allowed courts:
+    - "Boston Municipal Court"
+    - "District Court"
+    - "Housing Court"
+    - "Juvenile Court"
+    - "Land Court"
+    - "Probate and Family Court"
+    - "Superior Court"
+  categories:
+    - "MO-00-00-00-00"
+    - "BE-04-00-00-00"
+  typical role: "unknown"
+  generate download screen: True
+---
+objects:
+  - users: ALPeopleList.using(ask_number=True,target_number=1)
+  - household: ALPeopleList.using(ask_number=True, complete_attribute='complete')
+---
+objects:
+  - users[i].jobs: ALItemizedJobList.using(
+      complete_attribute='complete',
+      object_type=ALItemizedJob.using(employer_type=ALIndividual),
+      ask_number=True)
+  - users[i].nonemployment: ALIncomeList
+  - users[i].expenses: ALExpenseList.using(auto_gather=False, complete_attribute="exists")
+  - users[i].accounts: ALAssetList.using(complete_attribute='balance')
+---
+objects:
+  - household[i].jobs: ALJobList.using(complete_attribute='complete',
+        object_type=ALJob.using(employer_type=ALIndividual),
+        ask_number=True)
+---
+code: |
+  # By default, assume this will be included in other interviews
+  affidavit_supplement_is_standalone = False
+---
+#################### Interview order #####################
+comment: |
+  Controls order and branching logic for questions specific to this form
+id: interview_order_affidavit_of_indigency_supplement
+code: |
+  # Set the allowed courts for this interview
+  allowed_courts = interview_metadata["affidavit_of_indigency_supplement"]["allowed courts"]
+  if affidavit_is_standalone:
+    nav.set_section('review_case_info')
+  # Below sets the user_role by asking a question.
+  trial_court
+  case_name
+  docket_numbers[0]
+  users.gather()
+  set_parts(subtitle=str(users))
+  users[0].address.address
+  users[0].birthdate
+  user_grade_school_completed
+  has_disabilities
+  has_household_members
+  if affidavit_is_standalone:
+    set_progress(14)
+    nav.set_section('review_income')
+  users[0].jobs.gather()
+  job_description
+  users[0].nonemployment.gathered
+  list_incomes
+  has_special_training
+  household.gather()
+  list_household
+  review_income_screen
+  if poverty_scale_income_qualifies(full_household_income(), household_size=household_size, multiplier=1.25):
+    if confirm_can_skip_supplement:
+      household_income_qualifies = True
+      hh_income.value = full_household_income()
+      hh_income.times_per_year = 12
+      need_supplement = False
+    else:
+      del confirm_can_skip_supplement
+      reconsider('review_income_screen')
+  else:
+    # they will still need the supplement, but we'll make household income answers consistent
+    hh_income.value = full_household_income()
+    hh_income.times_per_year = 12
+    if affidavit_is_standalone:
+      set_progress(28)
+      nav.set_section('review_expenses')
+    users[0].expenses.gathered
+    review_expenses_screen
+    if affidavit_is_standalone:
+      set_progress(42)
+      nav.set_section('review_assets_and_debts')
+    user_owns_home
+    user_owns_car
+    users[0].accounts.gather()
+    if affidavit_is_standalone:
+      set_progress(57)
+    taxes_on_form
+    expenses_on_form
+    list_accounts_source
+    list_accounts_full
+    user_owns_property
+    user_has_debts
+    miscellaneous_facts
+    if affidavit_is_standalone:
+      set_progress(71)
+      nav.set_section('download_form')
+    signature_date
+  interview_order_affidavit_of_indigency_supplement = True
+---
+variable name: expense_terms
+data: !!omap
+  - rent: "Rent or Mortgage"
+  - food: "Food"
+  - electricity: "Electricity"
+  - oil: "Oil"
+  - gas: "Gas"
+  - fuel: "Other Heating or Cooking Fuel"
+  - water: "Water"
+  - telephone: "Telephone"
+  - clothing: "Clothing"
+  - laundry: "Laundry"
+  - transportation: "Transportation (including transit purchases)"
+  - car_insurance: "Car Insurance"
+  - child_education: "Child Education"
+  - childcare: "Childcare"
+  - child_support: "Child Support"
+  - health_insurance: "Medical Insurance (including health, dental, and vision)"
+  - uninsured_medical: "Medical costs (after amount paid by insurance)"
+  - other: "Other monthly expenses"
+#  - credit cards: "Credit Card Payments"
+---
+variable name: nonemployment_income_terms
+data: !!omap
+  - royalties: Royalties
+  - rental_income: Rental income
+  - interest: Interest
+  - dividents: Dividents
+  - trusts: Trusts
+  - annuities: Annuities
+  - pensions: Pensions
+  - retirement: Retirement
+  - workers_comp: Workers compensation
+  - private_disability_insurance: Private disability insurance
+  - child_support: Child support
+  - alimony: Alimony
+  - contributions: Contributions
+  - other: Other
+---
+objects:
+  nonemployment_income_terms_ordered: DAOrderedDict.using(elements=nonemployment_income_terms, auto_gather=False, gathered=True)
+---
+id: loop start bank accounts
+question: |
+ Do you have any bank accounts that you wish to disclose?
+subquestion: |
+  For example: money market accounts, investment accounts etc.
+fields:
+  - no label: users[0].accounts.there_are_any
+    datatype: yesnoradio
+---
+id: another account
+question: |
+  Are there any other accounts that you wish to disclose? 
+subquestion: |
+  You have already told us about your ${ list_accounts_full(users[0].accounts.complete_elements()) }.
+fields:
+  - no label: users[0].accounts.there_is_another
+    datatype: yesnoradio
+---
+question: |
+  Tell us about your ${ ordinal(i) } account
+fields:
+  - Account Type: users[0].accounts[i].source
+    datatype: dropdown
+    code: |
+        account_terms_ordered
+  - Account Balance: users[0].accounts[i].balance
+    datatype: currency
+---
+code: |
+  def list_accounts_source(accts):
+      return comma_and_list([acct.source for acct in accts], comma_string=',\n', and_string=',\n')
+  def list_accounts_full(accts):
+      return comma_and_list([f"{acct.source} ({currency(acct.balance)})" for acct in accts], comma_string=',\n', and_string=',\n')
+---
+only sets:
+  - household[i].complete
+code: |
+  household[i].jobs.gather()
+  household[i].jobs.revisit = True
+  household[i].complete = True
+---
+code: |
+  household[i].jobs[j].source
+  household[i].jobs[j].net
+  household[i].jobs[j].employer.name.first
+  household[i].jobs[j].times_per_year
+  household[i].jobs[j].complete = True
+---
+id: household members
+question: |
+  Do you live with a household member that is employed?
+fields:
+  - no label: household.there_are_any
+    datatype: yesnoradio
+---
+code: |
+  if not has_household_members:
+    household.there_are_any = False
+---
+question: |
+  How many of your household members are employed?
+subquestion: |
+  A household member is someone you live and share expenses with.
+fields:
+  - no label: household.target_number
+    datatype: integer
+---
+code: |
+  if not has_household_members:
+    household.target_number = 0
+---
+sets:
+  - household[i].name.first
+  - household[i].name.last
+question: |
+  What is the name of your ${ ordinal(i) } household member?
+fields:
+  code: household[i].name_fields()
+---
+id: household member job number, name or no name
+question: |
+  How many jobs does ${ household[i].name } have?
+fields:
+  - Number of jobs: household[i].jobs.target_number
+    datatype: integer
+---
+id: household member job name
+question: |
+  What is the job title of ${ household[i].name }'s ${ ordinal(j) } job?
+fields:
+  - Job title: household[i].jobs[j].source
+---
+question: |
+  Do you have another household member that is employed?
+subquestion: |
+  You have already told us about ${ comma_and_list(household.complete_elements()) }.
+fields:
+  - no label: household.there_is_another
+    datatype: yesnoradio
+---
+code: |
+  def full_household_income():
+    total_from_user = users[0].jobs.net_total(times_per_year=12) + users[0].nonemployment.total(times_per_year=12)
+    total_from_others = sum([per.jobs.net_total() for per in household])
+    return total_from_user + total_from_others
+---
+code: |
+  def list_household(all_hh):
+      member_list = []
+      for member in all_hh:
+          if len(member.jobs) > 0:
+              all_jobs = comma_list([f"a {mem_job.source} for {mem_job.employer.name} ({mem_job.employer.address.on_one_line()})" for mem_job in member.jobs])
+              member_list.append(f"{member.name}, works as {all_jobs}, making {currency(member.jobs.net_total(times_per_year=12))}")
+      return comma_list(member_list, comma_string=",\n", and_string=",\n")
+---
+id: how many jobs do you have
+question: |
+  How many jobs do you have?
+fields:
+  - no label: users[0].jobs.target_number
+    datatype: integer
+---
+id: any non-employment incomes
+question: |
+  Do you have any of the below sources of income, not from employment?
+fields:
+  - no label: users[0].nonemployment.selected_types
+    datatype: checkboxes
+    code: |
+      nonemployment_income_terms_ordered
+---
+code: |
+  users[0].nonemployment.selected_types
+  users[0].nonemployment.move_checks_to_list(None, nonemployment_income_terms)
+  users[0].nonemployment.moved = True
+---
+code: |
+  users[0].nonemployment.moved
+  for income_type in users[0].nonemployment.elements:
+    income_type.complete
+  users[0].nonemployment.revisit = True
+  users[0].nonemployment.gathered = True
+---
+question: |
+  Tell us about your ${ ordinal(i) } income
+subquestion: |
+  For example, you might recieve disability benefits (SSDI) for $1000 once a month.
+  % if i > 0:
+  You have already told us about your ${ users[0].nonemployment.complete_elements().as_noun("income") } from ${ list_incomes(users[0].nonemployment.complete_elements()) }.
+  % endif
+fields:
+  - Source of income: users[0].nonemployment[i].source
+    input type: dropdown
+    code: |
+      nonemployment_income_terms_ordered
+    default: other
+  - What type of income?: users[0].nonemployment[i].source
+    show if:
+      variable: users[0].nonemployment[i].source
+      is: other
+  - Times per year you recieve this income: users[0].nonemployment[i].times_per_year
+    input type: radio
+    code: |
+      times_per_year_list
+  - Amount of income: users[0].nonemployment[i].value
+    datatype: currency
+---
+question: |
+  Tell us about your ${ users[0].nonemployment[i].source } income
+subquestion: |
+  For example, you might recieve disability benefits (SSDI) for $1000 once a month.
+  % if i > 0:
+  You have already told us about your ${ users[0].nonemployment.complete_elements().as_noun("income") } from ${ list_incomes(users[0].nonemployment) }.
+  % endif
+fields:
+  - Times per year you recieve this income: users[0].nonemployment[i].times_per_year
+    input type: radio
+    code: |
+      times_per_year_list
+  - Amount of income: users[0].nonemployment[i].value
+    datatype: currency
+---
+code: |
+  def list_incomes(incomes):
+      to_iter = incomes.complete_elements() if isinstance(incomes, DAList) else incomes
+      return comma_and_list([
+          f"{income.source} ({currency(income.value)} {times_per_year(times_per_year_list, income.times_per_year)})"
+          for income in to_iter if hasattr(income, "source") and hasattr(income, "times_per_year") and hasattr(income, "value")
+      ])
+---
+id: any more non-employment incomes
+question: |
+  Do you have any additional sources of income not from employment?
+subquestion: |
+  % if users[0].nonemployment.complete_elements() > 1:
+  You have already told us about your incomes from ${ list_incomes(users[0].nonemployment.complete_elements()) }.
+  % else:
+  You have already told us about your income from ${ list_incomes(users[0].nonemployment.complete_elements()) }.
+  % endif
+fields:
+  - no label: users[0].nonemployment.there_is_another
+    datatype: yesnoradio
+---
+code: |
+  def job_description():
+    return comma_and_list([f"{job.source} {'(self-employed)' if job.is_self_employed else ('for ' + job.employer_name_address_phone())}" for job in users[0].jobs])
+---
+id: case info
+question: |
+  What is your case name?
+fields:
+  - "Case name": case_name
+    maxlength: 60
+---
+id: docket number
+question: |
+  Docket Number
+subquestion: |
+  If you know the docket number for this case, enter it below
+fields:
+  - I do not know the docket number: dont_know_docket_number
+    datatype: yesno
+  - Docket number: docket_numbers[0]
+    show if:  
+      variable: dont_know_docket_number
+      is: False
+  - What case do you want fees waived for? Briefly explain how the clerk can find your case.: docket_numbers[0]
+    show if: dont_know_docket_number
+    maxlength: 25
+help:
+  label: |
+    What's a docket number?
+  content: |
+    The docket number is a number that the court assigns to track your case.
+    
+    If this is a **new** case, you may not have one yet. You can leave
+    this blank if you're not sure.
+validation code: |
+  docket_numbers.there_is_another = False
+---
+id: education level
+question: |
+  What is your highest level of education completed?
+fields:
+  - "User grade school completed": user_grade_school_completed
+    input type: dropdown
+    choices:
+      - No formal schooling
+      - 1st grade
+      - 2nd grade
+      - 3rd grade
+      - 4th grade
+      - 5th grade
+      - 6th grade
+      - 7th grade
+      - 8th grade
+      - 9th grade
+      - 10th grade
+      - 11th grade
+      - 12th grade
+      - High School Diploma or GED
+      - Some college
+      - Associates degree
+      - Bachelor degree
+      - Graduate degree
+      - Doctorate degree
+      - Other
+  - Describe your highest level of education: user_grade_school_completed
+    show if:
+      variable: user_grade_school_completed
+      is: Other
+---
+id: itemized job line items
+generic object: ALItemizedJob
+question: |
+    ${ x.source } Pay
+subquestion: |
+    Enter info from your paystub for your job as a ${ x.source }
+
+    ---
+fields:
+    - ${ word("What is the hourly pay for this job?") if x.is_hourly else word("What are your wages for this job?") }: x.to_add['full time'].value
+      datatype: currency
+      show if:
+        code: x.is_part_time is False
+    - ${ word("What is the hourly pay for this job?") if x.is_hourly else word("What are your wages for this job?") }: x.to_add['part time'].value
+      datatype: currency
+      show if:
+        code: x.is_part_time is True
+    - note: |
+        How much do you pay per pay period (${ times_per_year(times_per_year_list=times_per_year_list, times_per_year=x.times_per_year) }) for:
+    - Federal taxes: x.to_subtract['federal_taxes'].value
+      datatype: currency
+      required: False
+    - State taxes: x.to_subtract['state_taxes'].value
+      datatype: currency
+      required: False
+    - Social security: x.to_subtract['social_security'].value
+      datatype: currency
+      required: False
+    - Medicare: x.to_subtract['medicare'].value
+      datatype: currency
+      required: False
+---
+id: regular job value
+question: |
+  What how much does ${ household[i] } get paid for ${ household[i].jobs[j].source }?
+fields:
+  - Is the job hourly?: household[i].jobs[j].is_hourly
+    datatype: yesnoradio
+  - How often does ${ household[i] } get paid?: household[i].jobs[j].times_per_year
+    input type: radio
+    code: |
+      times_per_year_list
+    datatype: integer
+  - How many hours does ${ household[i] } work in each period?: household[i].jobs[j].hours_per_period
+    datatype: number
+    show if: household[i].jobs[j].is_hourly
+  - What does ${ household[i] } get paid after taxes?: household[i].jobs[j].net
+    datatype: currency
+    show if: household[i].jobs[j].is_hourly
+  - What does ${ household[i] } gets paid hourly, after taxes?: household[i].jobs[j].net
+    datatype: currency
+    show if:
+      variable: household[i].jobs[j].is_hourly
+      is: False
+---
+generic object: ALItemizedJob
+question: |
+    Does your job as a ${ x.source } have other incomes or deductions?
+fields:
+    - Does the job have other incomes?: x.to_add.there_is_another
+      help: |
+        For example, tips, yearly bonuses, or commission
+      datatype: yesnoradio
+    - Does the job have other deductions?: x.to_subtract.there_is_another
+      datatype: yesnoradio
+---
+generic object: ALItemizedJob
+code: |
+  x.to_subtract[i].exists = True
+---
+code: |
+  taxes_on_form = set(['medicare', 'social_security', 'state_taxes', 'federal_taxes'])
+---
+code: |
+  expenses_on_form = set(['rent', 'food', 'electricity', 'gas', 'oil', 'water', 'telephone', 
+      'health_insurance', 'uninsured_medical', 'childcare', 'child_education', 'child_support',
+      'clothing', 'laundry', 'car_insurance', 'transportation'])
+---
+id: special training
+question: |
+  Do you have any special job training?
+subquestion: |
+  For example, do you have any trade or professional certifications and licenses.
+fields:
+  - Any special job training?: has_special_training
+    datatype: yesnoradio
+  - Tell us about your training: user_training
+    show if: has_special_training
+    required: False
+    maxlength: 140
+---
+id: dependents
+question: |
+  About your household
+fields:
+  - Does anyone else live with you as part of your household?: has_household_members
+    datatype: yesnoradio
+    help: |
+      For example, count your children, spouse, or other family member
+      you take care of or who helps take care of you.
+  - How many people? Don't count yourself. : household_additional_size
+    datatype: integer
+    show if: has_household_members
+---
+id: disabilities
+question: |
+  Do you have mental or physical disabilities which affect your income?
+subquestion: |
+fields:
+  - Do you have any disabilities?: has_disabilities
+    datatype: yesnoradio
+  - note: |
+      List them and explain how they affect your earning capacity and living expenses.
+    show if: has_disabilities
+  - Your disabilities: user_disabilities
+    input type: area
+    maxlength: 336
+    show if: has_disabilities
+---
+id: expenses review
+question: |
+  Review your expenses
+subquestion: |
+  Here is what you've told us about your monthly expenses. You can add more or continue
+  to the next question.
+
+  ${ users[0].expenses.table }
+
+  Total monthly expenses: ${ currency(users[0].expenses.total(times_per_year=12))}
+
+  ${ users[0].expenses.add_action() }
+field: review_expenses_screen
+---
+id: income review
+question: |
+  Review your incomes 
+subquestion: |
+  % if has_household_members:
+  Here is what you've told us about your sources of income in your household.
+  % else:
+  Here is what you've told us about your sources of income.
+  % endif
+
+  <h2 class="h4">Your jobs:</h2>
+
+  ${ users[0].jobs.table }
+
+  ${ users[0].jobs.add_action() }
+
+  <h2 class="h4">Your sources of income, not from employment:</h2>
+
+  ${ users[0].nonemployment.table }
+
+  ${ users[0].nonemployment.add_action() }
+
+  % if has_household_members:
+  <h2 class="h4">Your household member's jobs</h2>
+
+  ${ household.table }
+
+  ${ household.add_action() }
+  <h2 class="h4">Your total monthly household income</h2>
+  % else:
+  <h2 class="h4">Your total monthly income</h2>
+  % endif
+
+  ${ currency(full_household_income()) }
+
+field: review_income_screen
+---
+question: |
+  You might not need to complete this supplement
+subquestion: |
+  Earlier, you said that your household income was ${ currency(hh_income.total(times_per_year=12)) } per month.
+  However, you've given us more details about your income since then.
+  We think your household income is ${ currency(full_household_income()) } per month.
+  With this income, you automatically qualify for a waiver of court costs.
+fields:
+  - Is your household income actually ${ currency(full_household_income()) }: confirm_can_skip_supplement
+    datatype: yesnoradio
+---
+id: other monthly expenses
+question: |
+  Do you have any other monthly expenses?
+fields:
+  - Other monthly expenses: users[0].expenses["other"].exists
+    datatype: yesno
+  - Describe your remaining expenses: users[0].expenses["other"].display_name
+    show if: users[0].expenses["other"].exists
+    maxlength: 36
+  - Other expenses: users[0].expenses["other"].value
+    show if: users[0].expenses["other"].exists
+    datatype: currency
+    min: 0
+---
+code: |
+---
+id: name of one itemized job in list
+question: |
+  What is the the job title of your ${ 'primary' if i == 0 else ordinal(i)} job?
+subquestion: |
+  % if len(users[0].jobs.complete_elements()) > 0:
+  You've already told us about being a ${ comma_and_list([job.source for job in users[0].jobs.complete_elements()]) }.
+  % endif
+fields:
+  - Job title: users[0].jobs[i].source
+---
+id: home ownership
+question: |
+  Do you own a home?
+fields:
+  - no label: user_owns_home
+    datatype: yesnoradio
+  - "What is the value of the home?": user_home_value
+    show if: user_owns_home
+    datatype: currency
+    min: 0
+  - Are there any remaining loans on the home?: user_has_home_debt
+    show if: user_owns_home
+    datatype: yesnoradio
+  - How much do you have to pay on the remaining loans?: user_home_debt
+    show if: user_has_home_debt
+    datatype: currency
+    min: 0
+---
+id: car ownership
+question: |
+  Do you own a car?
+fields:
+  - no label: user_owns_car
+    datatype: yesnoradio
+  - "Car year": user_car_year
+    show if: user_owns_car
+    maxlength: 50
+  - "Car make": user_car_make
+    help: |
+      For example, Ford, Chevy, or Honda
+    show if: user_owns_car
+    maxlength: 50
+  - "Car value": user_car_value
+    show if: user_owns_car
+    datatype: currency
+    min: 0
+  - Do you have a car loan?: user_car_loan
+    datatype: yesnoradio
+    show if: user_owns_car
+  - "How much do you have to pay on the remaining loan?": user_car_debt
+    show if: user_car_loan
+    datatype: currency
+    min: 0
+---
+question: |
+  Do you own any property you haven't told us about?
+subquestion: |
+  This includes physical property or real estate that you have not already told us about.
+  For example, a boat, or land.
+
+  % if user_owns_car or user_owns_home:
+  You have already said that you own ${ comma_and_list(filter(lambda y: bool(y), [
+      f"a house worth {currency(user_home_value)}" if user_owns_home else "",
+      f"a car worth {currency(user_car_value)}" if user_owns_car else ""
+  ])) }.
+  % endif
+fields:
+  - no label: user_owns_property
+    input type: radio
+    choices:
+      - Yes, I own additional property: True
+      - No, I do not own any additional property: False
+  - List the property that you own: user_property_type
+    input type: area
+    show if: user_owns_property
+  - Combined value of the property: user_property_value
+    datatype: currency
+    show if: user_owns_property
+---
+id: debts
+question: |
+  Do you have any other unpaid debts?
+subquestion: |
+  % if (user_owns_car and user_car_loan) or (user_owns_home and user_has_home_debt):
+  You have already told us about your:
+
+  % if user_owns_car and user_car_loan:
+  * car loan for ${ currency(user_car_debt) }
+  % endif
+  % if user_owns_home and user_has_home_debt:
+  * home loan for ${ currency(user_home_debt) }
+  % endif
+  % endif
+fields:
+  - no label: user_has_debts
+    input type: radio
+    choices:
+      - Yes, I have other unpaid debts: True
+      - No, I do not have other unpaid debts: False
+  - note: Enter debt type and amount
+    show if: user_has_debts
+  - 'Specify all debts': user_debts
+    input type: area
+    maxlength: 336
+    show if: user_has_debts
+---
+id: miscellaneous facts
+question: |
+  Is there anything else you want to tell the judge about your situation?
+fields:
+  - no label: miscellaneous_facts
+    input type: area
+    required: False
+    rows: 4
+    maxlength: 420
+---
+id: preview affidavit_of_indigency_supplement
+question: |
+  Preview your form before you sign it
+subquestion: |
+  Here is a preview of the form you will sign on the next page.   
+  
+  ${ al_court_bundle.as_pdf(key='preview') }
+
+  Click the image to open it in a new tab. Click the "Edit answers" button
+  to edit your answers.
+
+  ${ action_button_html(url_action('review_affidavit_of_indigency_supplement'), label='Edit answers', color='info') }
+  
+  Remember to come back to this window to continue and sign your form.
+continue button field: affidavit_of_indigency_supplement_preview_question
+---
+sets:
+  - x.jobs[i].is_self_employed
+id: employer
+generic object: ALIndividual
+question: |
+  Who is the employer of ${ x } ${ x.jobs[i].source }
+fields:
+  - ${ x } is self employed: x.jobs[i].is_self_employed
+    datatype: yesno
+  - code: |
+      x.jobs[i].employer.name_fields(person_or_business='unsure', show_if={'variable': 'x.jobs[i].is_self_employed', 'is': 'False'})
+  - code: |
+      x.jobs[i].employer.address.address_fields(show_if={'variable': 'x.jobs[i].is_self_employed', 'is': 'False'})
+  - Phone number: x.jobs[i].employer.phone_number
+    required: False
+    show if:
+      variable: x.jobs[i].is_self_employed
+      is: False
+---
+sets:
+  - users[0].jobs[i].is_self_employed
+id: employer
+question: |
+  Tell us who employs you as a ${ users[0].jobs[i].source }
+fields:
+  - I am self employed: users[0].jobs[i].is_self_employed
+    datatype: yesno
+  - code: |
+      users[0].jobs[i].employer.name_fields(person_or_business='unsure', show_if={'variable': 'users[0].jobs[i].is_self_employed', 'is': 'False'})
+  - code: |
+      users[0].jobs[i].employer.address.address_fields(show_if={'variable': 'users[0].jobs[i].is_self_employed', 'is': 'False'})
+  - Phone number: users[0].jobs[i].employer.phone_number
+    required: False
+    show if:
+      variable: users[0].jobs[i].is_self_employed
+      is: False
+---
+sets:
+  - x.jobs[i].employer.name.first
+generic object: ALIndividual
+code: |
+  if x.jobs[i].is_self_employed:
+    x.address.address
+    x.jobs[i].employer.address = x.address
+    x.jobs[i].employer.phone = x.phone_number
+    x.jobs[i].employer.name = x.name
+---
+generic object: ALItemizedJob
+template: x.employer.address.unit_label
+content: |
+  Suite
+---
+continue button field: users.revisit
+question: |
+  Edit users
+subquestion: |
+  ${ users.table }
+
+  ${ users.add_action() }
+---
+table: users.table
+rows: users
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.zip") else ""
+  - Birthdate: |
+      row_item.birthdate if defined("row_item.birthdate") else ""
+  - Signature: |
+      row_item.signature if defined("row_item.signature") else ""
+edit:
+  - name.first
+  - address.zip
+  - birthdate
+  - signature
+confirm: True
+---
+table: users[0].nonemployment.table
+rows: users[0].nonemployment
+columns:
+  - Type: |
+      row_item.source
+  - Times per year: |
+      times_per_year(times_per_year_list, row_item.times_per_year)
+  - Amount: |
+      currency(row_item.value)
+edit:
+  - source
+  - value
+  - times_per_year
+---
+continue button field: household.revisit
+question: |
+  Edit household members
+subquestion: |
+  ${ household.table }
+
+  ${ household.add_action() }
+---
+table: household.table
+rows: household
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+  - Occupations: |
+      comma_and_list(row_item.jobs.sources())
+  - Income: |
+      currency(row_item.jobs.net_total())
+edit:
+  - name.first
+  - jobs.revisit
+---
+continue button field: users[0].nonemployment.revisit
+question: |
+  Edit incomes not from a job
+subquestion: |
+  ${ users[0].nonemployment.table }
+
+  ${ users[0].nonemployment.add_action() }
+---
+continue button field: users[0].expenses.revisit
+question: |
+  Edit expenses
+subquestion: |
+  ${ users[0].expenses.table }
+
+  ${ users[0].expenses.add_action() }
+---
+continue button field: users[0].accounts.revisit
+question: |
+  Edit accounts
+subquestion: |
+  ${ users[0].accounts.table }
+
+  ${ users[0].accounts.add_action() }
+---
+table: users[0].accounts.table
+rows: users[0].accounts
+columns:
+  - Name: |
+      row_item.name
+  - Amount: |
+      currency(row_item.balance)
+edit:
+  - name
+  - balance
+---
+objects:
+  - affidavit_of_indigency_supplement_post_interview_instructions: ALDocument.using(title="Instructions", filename="affidavit_of_indigency_supplement_next_steps.docx", has_addendum=False, default_overflow_message=AL_DEFAULT_OVERFLOW_MESSAGE)
+  - affidavit_of_indigency_supplement_attachment: ALDocument.using(title="Supplement to the Affidavit of Indigency", filename="affidavit_of_indigency_supplement.pdf", has_addendum=False, default_overflow_message=AL_DEFAULT_OVERFLOW_MESSAGE)
+---
+comment: |
+  According to this form and the main affidavit, everyone else in the household (besides yourself)
+  is considered a dependent. 
+  See https://github.com/SuffolkLITLab/docassemble-AffidavitOfIndigencySupplement/issues/26. 
+attachments:
+  - name: affidavit to indigency supplement post interview instructions
+    filename: Post-interview-instructions
+    variable name: affidavit_of_indigency_supplement_post_interview_instructions[i]
+    skip undefined: True
+    docx template file: affidavit_of_indigency_supplement_next_steps.docx
+  - name: affidavit to indigency supplement attachment
+    filename: affidavit_of_indigency_supplement.pdf
+    variable name: affidavit_of_indigency_supplement_attachment[i]
+    editable: False
+    skip undefined: False
+    pdf template file: affidavit_of_indigency_supplement.pdf
+    fields:
+      - "court_name": ${ trial_court }
+      - "case_name": ${ case_name }
+      - "case_number": ${ str(docket_numbers[0]) }
+      - "users1_name": ${ users[0] }
+      - "users1_name__2": ${ users[0] }
+      - "users1_address_on_one_line": ${ users[0].address.on_one_line() }
+      - "users1_birthdate": ${ users[0].birthdate.format() }
+      - "user_grade_school_completed": ${ user_grade_school_completed }
+      - "user_training": ${ user_training if has_special_training else ""}
+      - "user_disabilities": ${ user_disabilities if has_disabilities else ''}
+      - "user_dependents_number": ${ household_additional_size if has_household_members else 0 }
+      - "user_work_name": ${ job_description() }
+      - "user_income_nonemployment": ${ list_incomes(users[0].nonemployment) if users[0].nonemployment else 'N/A' }
+      - "user_income_gross_annual": ${ thousands(users[0].jobs.gross_total(times_per_year=1) + users[0].nonemployment.total(times_per_year=1), show_decimals=True) }
+      - "user_income_gross_monthly": ${ thousands(users[0].jobs.gross_total(times_per_year=12) + users[0].nonemployment.total(times_per_year=12), show_decimals=True) }
+      - "user_tax_federal": ${ thousands(users[0].jobs.deduction_total(source='federal_taxes', times_per_year=12), show_decimals=True) }
+      - "user_tax_state": ${ thousands(users[0].jobs.deduction_total(source='state_taxes', times_per_year=12), show_decimals=True) }
+      - "user_tax_social_security": ${ thousands(users[0].jobs.deduction_total(source='social_security', times_per_year=12), show_decimals=True) }
+      - "user_tax_medicare": ${ thousands(users[0].jobs.deduction_total(source='medicare', times_per_year=12), show_decimals=True) }
+      - "user_tax_other_amount": ${ thousands(users[0].jobs.deduction_total(exclude_source=["federal_taxes", "state_taxes", "social_security", "medicare"], times_per_year=12), show_decimals=True) }
+      - "user_tax_other": ${ comma_and_list([name for name in users[0].jobs.sources(which_side='deductions') if name not in taxes_on_form]) }
+      - "user_tax_total": ${ thousands(users[0].jobs.deduction_total(times_per_year=12), show_decimals=True) }
+      - "user_income_after_tax1": ${ thousands(users[0].jobs.net_total(times_per_year=12) + users[0].nonemployment.total(times_per_year=12), show_decimals=True) }
+      - "user_househould_member_work_name": ${ list_household(household) }
+      - "user_income_after_tax2": ${ thousands(users[0].jobs.net_total(times_per_year=12) + users[0].nonemployment.total(times_per_year=12), show_decimals=True) }
+      - "user_expense_rent": ${ thousands(users[0].expenses.total(source=["rent"]), show_decimals=True) }
+      - "user_expense_uninsured_medical": ${ thousands(users[0].expenses.total(source=["uninsured_medical"]), show_decimals=True) }
+      - "user_expense_childcare": ${ thousands(users[0].expenses.total(source=["childcare"]), show_decimals=True) }
+      - "user_expense_food": ${ thousands(users[0].expenses.total(source=["food"]), show_decimals=True) }
+      - "user_expense_electricity": ${ thousands(users[0].expenses.total(source=["electricity"]), show_decimals=True) }
+      - "user_expense_education": ${ thousands(users[0].expenses.total(source=["child_education"]), show_decimals=True) }
+      - "user_expense_child_support": ${ thousands(users[0].expenses.total(source=["child_support"]), show_decimals=True) }
+      - "user_expense_gas": ${ thousands(users[0].expenses.total(source=["gas"]), show_decimals=True) }
+      - "user_expense_oil": ${ thousands(users[0].expenses.total(source=["oil"]), show_decimals=True) }
+      - "user_expense_clothing": ${ thousands(users[0].expenses.total(source=["clothing"]), show_decimals=True) }
+      - "user_expense_water": ${ thousands(users[0].expenses.total(source=["water"]), show_decimals=True) }
+      - "user_expense_laundry": ${ thousands(users[0].expenses.total(source=["laundry"]), show_decimals=True) }
+      - "user_expense_telephone": ${ thousands(users[0].expenses.total(source=["telephone"]), show_decimals=True) }
+      - "user_expense_car_insurance": ${ thousands(users[0].expenses.total(source=["car_insurance"]), show_decimals=True) }
+      - "user_expense_health_insurance": ${ thousands(users[0].expenses.total(source=["health_insurance"]), show_decimals=True) }
+      - "user_expense_transportation": ${ thousands(users[0].expenses.total(source=["transportation"]), show_decimals=True) }
+      - "user_expense_other_amount": ${ thousands(users[0].expenses.total(exclude_source=expenses_on_form), show_decimals=True) }
+      - "user_expense_other": ${ comma_and_list(set(users[0].expenses.sources()).difference(expenses_on_form)) }
+      - "user_expense_total": ${ thousands(users[0].expenses.total(), show_decimals=True) }
+      - "user_income_net": ${ thousands(users[0].jobs.net_total(times_per_year=12) + users[0].nonemployment.total(times_per_year=12) - users[0].expenses.total(), show_decimals=True) }
+      - "user_owns_home_yes": ${ user_owns_home }
+      - "user_owns_home_no": ${ not user_owns_home }
+      - "user_home_value": ${ thousands(user_home_value, show_decimals=True) if user_owns_home else "" }
+      - "user_home_debt": ${ thousands(user_home_debt, show_decimals=True) if user_owns_home else ""}
+      - "user_owns_car_yes": ${ user_owns_car }
+      - "user_owns_car_no": ${ not user_owns_car }
+      - "user_car_year": ${ user_car_year if user_owns_car else ""}
+      - "user_car_make": ${ user_car_make if user_owns_car else ""}
+      - "user_car_value": ${ thousands(user_car_value, show_decimals=True) if user_owns_car else "" }
+      - "user_car_debt": ${ thousands(user_car_debt, show_decimals=True) if user_owns_car else "" }
+      - "user_accounts_balance": ${ comma_and_list([currency(ac.balance) for ac in users[0].accounts], comma_string=',\n', and_string=',\n') }
+      - "user_accounts_type": ${ list_accounts_source(users[0].accounts) }
+      - "user_property_type": ${ user_property_type if user_owns_property else "" }
+      - "user_property_value": ${ user_property_value if user_owns_property else "" }
+      - "user_debts": ${ thousands(user_debts, show_decimals=True) if user_has_debts else "" }
+      - "miscellaneous_facts": ${ miscellaneous_facts }
+      - "users1_signature": ${ users[0].signature_if_final(i) }
+      - "users1_address_line_one": ${ users[0].address.line_one() }
+      - "users1_address_city": ${ users[0].address.city }
+      - "users1_address_state": ${ users[0].address.state }
+      - "users1_address_zip": ${ users[0].address.zip }
+      - "signature_date": ${ signature_date }
