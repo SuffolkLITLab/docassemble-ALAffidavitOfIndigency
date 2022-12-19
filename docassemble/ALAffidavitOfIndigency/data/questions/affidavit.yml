@@ -24,8 +24,9 @@ code: |
   # This controls the default state in address field questions
   AL_DEFAULT_STATE = "MA"
 ---
-comment: |
-  TODO(brycew): get is_standalone with nav working
+code: |
+  al_form_requires_digital_signature = False
+---
 code: |
   affidavit_is_standalone = True
 ---
@@ -104,6 +105,14 @@ subquestion: |
 progress: 100
 section: download
 event: download
+---
+event: review_affidavit_of_indigency_supplement
+code: |
+  review_affidavit_of_indigency
+---
+event: fees_section
+code: |
+  review_affidavit_of_indigency
 ---
 event: review_assets_and_debts
 code: |

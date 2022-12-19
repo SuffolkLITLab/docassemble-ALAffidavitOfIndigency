@@ -339,7 +339,7 @@ fields:
     datatype: currency
 ---
 question: |
-  Tell us about your ${ users[0].nonemployment[i].source } income
+  Tell us about your ${ nonemployment_income_terms.get(users[0].nonemployment[i].source, users[0].nonemployment[i].source.replace("_", " ")).lower() } income
 subquestion: |
   For example, you might recieve disability benefits (SSDI) for $1000 once a month.
   % if i > 0:
@@ -621,8 +621,13 @@ subquestion: |
   We think your household income is ${ currency(full_household_income()) } per month.
   With this income, you automatically qualify for a waiver of court costs.
 fields:
-  - Is your household income actually ${ currency(full_household_income()) }: confirm_can_skip_supplement
+  - Is your monthly household income ${ currency(full_household_income()) }: confirm_can_skip_supplement
     datatype: yesnoradio
+  - note: |
+      Edit your income so it matches your situation on the next screen.
+    show if:
+      variable: confirm_can_skip_supplement
+      is: false
 ---
 id: other monthly expenses
 question: |
@@ -854,7 +859,7 @@ table: users[0].nonemployment.table
 rows: users[0].nonemployment
 columns:
   - Type: |
-      row_item.source
+      nonemployment_income_terms.get(row_item.source, row_item.source.replace("_", " ")).lower()
   - Times per year: |
       times_per_year(times_per_year_list, row_item.times_per_year)
   - Amount: |

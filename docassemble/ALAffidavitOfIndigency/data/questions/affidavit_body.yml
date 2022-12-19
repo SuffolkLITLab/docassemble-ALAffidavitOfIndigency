@@ -18,6 +18,7 @@ data:
     Affidavit of Indigency
   description: |-
     A form used to ask Massachusetts courts for a fee waiver, and its supplement, which gives the court detailed information about finances
+  original_form: https://www.mass.gov/doc/affidavit-of-indigency/download
 ---
 objects:
   - hh_income: ALJob
@@ -42,7 +43,7 @@ code: |
   # These should be all of the necessary questions, not just the 
   # intro screen/etc.
   if affidavit_is_standalone:
-    nav.set_section('affidavit_section')
+    nav.set_section('review_affidavit_of_indigency')
   user_started_case
   users.gather()
   if len(users) > 1:

@@ -24,14 +24,25 @@ review:
       % for item in users:
         * ${ item }
       % endfor
-  - Edit: public_assistance_kinds
+  - label: Edit
+    fields:
+      - public_assistance_kinds
+      - recompute:
+        - is_indigent
+        - need_income
+        - need_supplement
     button: |
       % if public_assistance_kinds.any_true():
-      **Public benefits**: ${ public_assistance_kinds.true_values }
+      **Public benefits**: ${ public_assistance_kinds.true_values() }
       % else:
       **No public benefits received**
       % endif
-  - Edit: can_afford
+  - label: Edit
+    fields:
+      - can_afford
+      - recompute:
+        - is_indigent
+        - need_supplement
     button: |
       % if can_afford:
       **I can afford the court costs**
@@ -59,10 +70,6 @@ review:
       % else:
       **No disabilities**
       % endif
-  - Edit: household_additional_size
-    button: |
-      **Number of dependents**:
-      ${ household_additional_size if has_household_members else 0 }
   - Edit: users[0].nonemployment.revisit
     button: |
       **Income, not from employment**:
@@ -74,9 +81,21 @@ review:
       ${ currency(users[0].jobs.net_total(times_per_year=12)) }
   - label: Edit
     fields:
+      - household_additional_size
+      - recompute:
+        - update_household_number
+        - is_indigent
+        - need_supplement
+    button: |
+      **Number of dependents**:
+      ${ household_additional_size if has_household_members else 0 }
+  - label: Edit
+    fields:
       - household.revisit
       - recompute:
         - update_household_number
+        - is_indigent
+        - need_supplement
     button: |
       % if len(household) == 0:
       **No household members**
