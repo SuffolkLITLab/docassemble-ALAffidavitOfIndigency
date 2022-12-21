@@ -317,7 +317,6 @@ code: |
 question: |
   Tell us about your ${ ordinal(i) } income
 subquestion: |
-  For example, you might recieve disability benefits (SSDI) for $1000 once a month.
   % if i > 0:
   You have already told us about your ${ users[0].nonemployment.complete_elements().as_noun("income") } from ${ list_incomes(users[0].nonemployment.complete_elements()) }.
   % endif
