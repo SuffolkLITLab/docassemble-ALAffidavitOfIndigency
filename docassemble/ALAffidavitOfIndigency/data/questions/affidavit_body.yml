@@ -25,6 +25,14 @@ objects:
   - fees: DADict.using(gathered=True, auto_gather=False, object_type=DAObject)
   - users: ALPeopleList.using(there_are_any=True)
 ---
+comment: |
+  Transition to the affidavitofindigency as a Bundle object, not a document
+mandatory: True
+id: remove_old_indigency_doc
+code: |
+  if defined('affidavitofindigency_attachment') and isinstance(affidavitofindigency_attachment, ALDocument):
+    del affidavitofindigency_attachment
+---
 code: |
   # By default, assume this will be included in other interviews
   affidavit_is_standalone = False
@@ -673,7 +681,8 @@ code: |
   filing_fees_amount = fees['Filing fee'].amount
 ---
 objects:
-  - affidavitofindigency_attachment: ALDocument.using(filename="affidavit_of_indigency", title="Affidavit of Indigency", has_addendum=False)
+  - affidavitofindigency_attachment: ALDocumentBundle.using(elements=[affidavit_of_indigency_first_form, affidavit_of_indigency_supplement_attachment], filename="affidavit_of_indigency", title="Affidavit of Indigency")
+  - affidavit_of_indigency_first_form: ALDocument.using(filename="affidavit_of_indigency", title="Affidavit of Indigency", has_addendum=False)
 ---
 code: |
   if al_form_type == "appeal":
@@ -681,9 +690,15 @@ code: |
   else:
     affidavit_of_indigency_filing_court = trial_court
 ---
+code: |
+  affidavit_of_indigency_supplement_attachment.enabled = is_indigent and need_supplement
+---
+code: |
+  affidavit_of_indigency_first_form.enabled = True
+---
 attachment:
   - name: Affidavit of Indigency
-    variable name: affidavitofindigency_attachment[i]
+    variable name: affidavit_of_indigency_first_form[i]
     filename: affidavitofindigency
     pdf template file: affidavitofindigency.pdf
     editable: False

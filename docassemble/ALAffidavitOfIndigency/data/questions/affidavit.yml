@@ -33,9 +33,6 @@ code: |
 code: |
   affidavitofindigency_attachment.enabled = True
 ---
-code: |
-  affidavit_of_indigency_supplement_attachment.enabled = is_indigent and need_supplement
----
 sections:
   - review_affidavit_of_indigency: Affidavit
   - review_affidavit_of_indigency_supplement: Supplement
@@ -131,5 +128,5 @@ code: |
   review_affidavit_of_indigency
 ---
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[affidavitofindigency_attachment, affidavit_of_indigency_supplement_attachment], filename="affidavit_of_indigency.pdf", title="All forms to download for your records")
-  - al_court_bundle: ALDocumentBundle.using(elements=[affidavitofindigency_attachment, affidavit_of_indigency_supplement_attachment], filename="affidavit_of_indigency.pdf", title="All forms to download for your records")
+  - al_user_bundle: ALDocumentBundle.using(elements=[affidavitofindigency_attachment], filename="affidavit_of_indigency.pdf", title="All forms to download for your records")
+  - al_court_bundle: ALDocumentBundle.using(elements=[affidavitofindigency_attachment], filename="affidavit_of_indigency.pdf", title="All forms to download for your records")

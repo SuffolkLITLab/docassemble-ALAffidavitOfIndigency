@@ -80,7 +80,6 @@ code: |
   has_disabilities
   has_household_members
   if affidavit_is_standalone:
-    set_progress(14)
     nav.set_section('review_income')
   users[0].jobs.gather()
   job_description
@@ -104,18 +103,14 @@ code: |
     hh_income.value = full_household_income()
     hh_income.times_per_year = 12
     if affidavit_is_standalone:
-      set_progress(28)
       nav.set_section('review_expenses')
     users[0].expenses.gathered
     review_expenses_screen
     if affidavit_is_standalone:
-      set_progress(42)
       nav.set_section('review_assets_and_debts')
     user_owns_home
     user_owns_car
     users[0].accounts.gather()
-    if affidavit_is_standalone:
-      set_progress(57)
     taxes_on_form
     expenses_on_form
     list_accounts_source
@@ -124,7 +119,6 @@ code: |
     user_has_debts
     miscellaneous_facts
     if affidavit_is_standalone:
-      set_progress(71)
       nav.set_section('download_form')
     signature_date
   interview_order_affidavit_of_indigency_supplement = True
