@@ -3,14 +3,48 @@ include:
   - affidavit_body.yml
 ---
 metadata:
-  title: Affidavit of Indigency
+  title: Affidavit of Indigency and Supplement
+  short title: Affidavit of Indigency
+  authors:
+    - Quinten Steenhuis
+    - Bryce Willey
+    - Samuel Roth
 ---
 code: |
   interview_short_title = "Ask the court to waive fees"
 ---
 code: |
+  github_repo_name = "docassemble-ALAffidavitOfIndigency"
+---
+code: |
+  # This controls the default country and list of states in address field questions
+  AL_DEFAULT_COUNTRY = "US"
+---
+code: |
+  # This controls the default state in address field questions
+  AL_DEFAULT_STATE = "MA"
+---
+code: |
+  al_form_requires_digital_signature = False
+---
+code: |
+  affidavit_is_standalone = True
+---
+code: |
   affidavitofindigency_attachment.enabled = True
 ---
+sections:
+  - review_affidavit_of_indigency: Affidavit
+  - review_affidavit_of_indigency_supplement: Supplement
+    subsections:
+    - review_case_info: Case and Personal Information
+    - review_income: Income
+    - review_expenses: Expenses
+    - review_assets_and_debts: Assets and Debts
+  - fees_section: Fees to Waive
+  - download_form: Download Form
+---
+############################# Main order #######################
 id: run main interview
 mandatory: True
 code: |
@@ -20,8 +54,16 @@ code: |
   ask_affidavit_questions # Main questions
   if not is_indigent:
     doesnt_qualify_ending
+  # Store anonymous data for analytics / statistics
+  store_variables_snapshot(
+      persistent=True,
+      data={
+          "zip": showifdef("users[0].address.zip"),
+          "reached_interview_end": True,
+      },
+  )
   preview
-  basic_questions_signature_flow  
+  basic_questions_signature_flow
   download
 ---
 id: preview form
@@ -34,7 +76,7 @@ subquestion: |
 
   ${ al_user_bundle.as_pdf(key='preview') }
 
-  ${action_button_html(url_action('review_fee_waiver'), icon='edit', label=word("Make Changes"), size="sm")}
+  ${action_button_html(url_action('review_affidavit_of_indigency'), icon='edit', label=word("Make Changes"), size="sm")}
 ---
 id: final download
 decoration: file-download
@@ -52,14 +94,38 @@ subquestion: |
      locations, you must file at a different address. Call the court to be sure.
   1. If you need to call the court, you can call ${ trial_court } at ${ trial_court.phone }.
   
-  ${ al_user_bundle.download_list_html() }  
+  ${ al_user_bundle.download_list_html() }
   
-  ${action_button_html(url_action('review_fee_waiver'), icon='edit', label=word("Make changes"))}
+  ${action_button_html(url_action('review_affidavit_of_indigency'), icon='edit', label=word("Make changes"))}
 
-  ${ al_user_bundle.send_button_html() }
+  ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
 progress: 100
 section: download
 event: download
+---
+event: review_affidavit_of_indigency_supplement
+code: |
+  review_affidavit_of_indigency
+---
+event: fees_section
+code: |
+  review_affidavit_of_indigency
+---
+event: review_assets_and_debts
+code: |
+  review_affidavit_of_indigency
+---
+event: review_income
+code: |
+  review_affidavit_of_indigency
+---
+event: review_expenses
+code: |
+  review_affidavit_of_indigency
+---
+event: review_case_info
+code: |
+  review_affidavit_of_indigency
 ---
 objects:
   - al_user_bundle: ALDocumentBundle.using(elements=[affidavitofindigency_attachment], filename="affidavit_of_indigency.pdf", title="All forms to download for your records")

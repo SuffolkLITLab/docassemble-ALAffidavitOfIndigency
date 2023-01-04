@@ -1,15 +1,43 @@
 ---
 include:
+  - docassemble.ALToolbox:al_income.yml
   - docassemble.AssemblyLine:al_package.yml
   - docassemble.MassAccess:massaccess.yml
+  - affidavit_of_indigency_supplement_body.yml
+  - review_page.yml
 ---
 modules:
-  - docassemble.income.income
   - docassemble.PovertyScale.poverty
 ---
+mandatory: True
+variable name: interview_metadata["affidavit_of_indigency"]
+data:
+  title: >-
+    Affidavit of Indigency and Supplement
+  short title: >-
+    Affidavit of Indigency
+  description: |-
+    A form used to ask Massachusetts courts for a fee waiver, and its supplement, which gives the court detailed information about finances
+  original_form: https://www.mass.gov/doc/affidavit-of-indigency/download
+---
 objects:
-  - hh_income: Job
+  - hh_income: ALJob
   - fees: DADict.using(gathered=True, auto_gather=False, object_type=DAObject)
+  - users: ALPeopleList.using(there_are_any=True)
+---
+comment: |
+  Transition to the affidavitofindigency as a Bundle object, not a document
+mandatory: True
+id: remove_old_indigency_doc
+code: |
+  if defined('affidavitofindigency_attachment') and not isinstance(affidavitofindigency_attachment, ALDocumentBundle):
+    del affidavitofindigency_attachment
+    del al_user_bundle
+    del al_court_bundle
+---
+code: |
+  # By default, assume this will be included in other interviews
+  affidavit_is_standalone = False
 ---
 id: affidavit prompts
 code: |
@@ -24,6 +52,8 @@ id: question order
 code: |
   # These should be all of the necessary questions, not just the 
   # intro screen/etc.
+  if affidavit_is_standalone:
+    nav.set_section('review_affidavit_of_indigency')
   user_started_case
   users.gather()
   if len(users) > 1:
@@ -37,6 +67,10 @@ code: |
       can_afford
   if is_indigent:
     qualify_interstitial
+    if need_supplement:
+      interview_order_affidavit_of_indigency_supplement
+    if affidavit_is_standalone:
+      nav.set_section("fees_section")
     fees['Filing fee'].waive
     fees['Costs of an expert witness'].waive
     fees_interstitial
@@ -78,7 +112,7 @@ question: |
   Get help with court costs and fees
 subquestion: |
   This short online form will help you fill out an "Affidavit
-  of Indigency." This form tells the court that you cannot
+  of Indigency". This form tells the court that you cannot
   pay court fees.
     
   In some cases the waiver is automatic. In other cases
@@ -203,7 +237,7 @@ depends on:
   - household_size
 code: |
   household_income_limit = poverty_scale_get_income_limit(household_size=household_size, multiplier=1.25)
-  household_income_qualifies = poverty_scale_income_qualifies(hh_income.amount(period_to_use=12), household_size=household_size, multiplier=1.25)
+  household_income_qualifies = poverty_scale_income_qualifies(hh_income.total(times_per_year=12), household_size=household_size, multiplier=1.25)
 ---
 depends on:
   - household_additional_size
@@ -366,9 +400,9 @@ fields:
     help: |
       Put in the amount you earn after taxes. This is
       also called your "net" income.
-  - How often do you earn that amount?: hh_income.period
+  - How often do you earn that amount?: hh_income.times_per_year
     input type: radio
-    code: period_list()
+    code: times_per_year_list
     datatype: integer
 ---
 id: user ability to pay
@@ -392,9 +426,8 @@ subquestion: |
   
   1. You receive public assistance
   1. Your income is below 125% of the Federal Poverty Level. For your household
-     of ${household_size}, the limit is ${currency(household_income_limit/12)} per month. However, you told us your income is ${currency(hh_income.amount(period_to_use=12))} per month.
+     of ${household_size}, the limit is ${currency(household_income_limit/12)} per month. However, you told us your income is ${currency(hh_income.total(times_per_year=12))} per month.
   1. You must be unable to afford to pay the costs, or unable to do so without depriving you or your dependents the necessities of life, including food, shelter, and clothing. You said you are able to pay the costs.
----
 ---
 id: user does not qualify
 continue button field: doesnt_qualify_interstitial
@@ -405,7 +438,7 @@ subquestion: |
   
   1. You receive public assistance
   1. Your income is below 125% of the Federal Poverty Level. For your household
-     of ${household_size}, the limit is ${currency(household_income_limit/12)} per month. However, you told us your income is ${currency(hh_income.amount(period_to_use=12))} per month.
+     of ${household_size}, the limit is ${currency(household_income_limit/12)} per month. However, you told us your income is ${currency(hh_income.total(period_to_use=12))} per month.
   1. You must be unable to afford to pay the costs, or unable to do so without depriving you or your dependents the necessities of life, including food, shelter, and clothing. You said you are able to pay the costs.
 ---
 id: select fees waived
@@ -534,7 +567,7 @@ subquestion: |
   % endif
   % endfor
 
-  ${action_button_html(url_action("fees['Filing fee'].waive"))}
+  ${action_button_html(url_action("fees['Filing fee'].waive"), label="Add fees to waive")}
   
 continue button field: fees_interstitial
 ---
@@ -558,25 +591,27 @@ subquestion: |
   
   **You earn less than the income limit.**
 
-  You said that your ${income_period(hh_income.period).lower()} income
-  is ${currency(hh_income.amount(period_to_use=hh_income.period))}.
+  You said that your ${times_per_year(times_per_year_list, hh_income.times_per_year).lower()} income
+  is ${currency(hh_income.total(times_per_year=hh_income.times_per_year))}.
   
   The limit for a household of ${nice_number(household_size)} is 125% of
-  the poverty level, or ${currency(household_income_limit/hh_income.period)}.
+  the poverty level, or ${currency(household_income_limit/hh_income.times_per_year)}.
+
   % elif not can_afford:
   You told us that you can't afford to pay the fees and pay for the necessities
   of life. A judge will take a closer look at your income and expenses and decide
   if you qualify for sure.
-  
-  You also must complete a [supplemental affidavit](https://www.mass.gov/doc/supplement-to-the-affidavit-of-indigency/download). Please download, fill out, and print this on your own. It's not part of this online form yet.
-  
-  Keep going with this online form. You can file the supplemental affidavit
-  later.
+
   % endif
   
   ${ collapse_template(fee_waiver_help_template) }
 
+  % if public_assistance_kinds.any_true() or household_income_qualifies:
   On the next screen, we'll ask you about the specific fees you want waived.
+  % else:
+  Next, you will complete the supplemental affidavit. This will ask for more
+  details about your finances, which the court needs to determine if you qualify.
+  % endif
 ---
 template: fee_waiver_help_template
 subject: |
@@ -596,6 +631,15 @@ content: |
   * [What if the clerk does not approve my affidavit right away?](https://www.masslegalhelp.org/what-if-the-clerk-does-not-approve-my-affidavit-of-indigency-right-away-)
   * [What if the clerk denies my affidavit?](https://www.masslegalhelp.org/what-if-the-clerk-denies-my-affidavit-of-indigency-)
   
+---
+id: explain affidavit of indigency
+continue button field: indigency_supplement_intro
+question: |
+  Fee waiver supplement questions
+subquestion: |
+  The next questions will ask for more detailed information
+  about your financials, which will fill out the fee waiver
+  supplement application.
 ---
 code: |
   users[0].address.geolocate()
@@ -625,21 +669,24 @@ code: |
     recipient_email = ""
 ---
 code: |
-  if not (hh_income.period in [52,26,12,1]):
-    monthly_income = hh_income.amount(period_to_use=12)
-    hh_income.period = 12
+  if not (hh_income.times_per_year in [52,26,12,1]):
+    monthly_income = hh_income.total(times_per_year=12)
+    hh_income.times_per_year = 12
     hh_income.value = monthly_income
-  weekly = 'Yes' if need_income and hh_income.period == 52 else 'No'
-  biweekly = 'Yes' if need_income and hh_income.period == 26 else 'No'
-  monthly = 'Yes' if need_income and hh_income.period == 12 else 'No'
-  annually = 'Yes' if need_income and hh_income.period == 1 else 'No'     
+  weekly = 'Yes' if need_income and hh_income.times_per_year == 52 else 'No'
+  biweekly = 'Yes' if need_income and hh_income.times_per_year == 26 else 'No'
+  monthly = 'Yes' if need_income and hh_income.times_per_year == 12 else 'No'
+  annually = 'Yes' if need_income and hh_income.times_per_year == 1 else 'No'
 ---
 code: |
   # filing_fees_amount = fees['E-filing'].amount + fees['Filing fee'].amount if defined("fees['Filing fee'].amount") and fees['Filing fee'].waive else fees['E-filing'].amount
   filing_fees_amount = fees['Filing fee'].amount
 ---
 objects:
-  - affidavitofindigency_attachment: ALDocument.using(filename="affidavit_of_indigency", title="Affidavit of Indigency", has_addendum=False)
+  - affidavit_of_indigency_first_form: ALDocument.using(filename="affidavit_of_indigency", title="Affidavit of Indigency", has_addendum=False)
+---
+objects:
+  - affidavitofindigency_attachment: ALDocumentBundle.using(elements=[affidavit_of_indigency_first_form, affidavit_of_indigency_supplement_attachment], filename="affidavit_of_indigency", title="Affidavit of Indigency")
 ---
 code: |
   if al_form_type == "appeal":
@@ -647,9 +694,15 @@ code: |
   else:
     affidavit_of_indigency_filing_court = trial_court
 ---
+code: |
+  affidavit_of_indigency_supplement_attachment.enabled = is_indigent and need_supplement
+---
+code: |
+  affidavit_of_indigency_first_form.enabled = True
+---
 attachment:
   - name: Affidavit of Indigency
-    variable name: affidavitofindigency_attachment[i]
+    variable name: affidavit_of_indigency_first_form[i]
     filename: affidavitofindigency
     pdf template file: affidavitofindigency.pdf
     editable: False
@@ -676,8 +729,8 @@ attachment:
       - "biweekly": ${biweekly}
       - "monthly": ${monthly}
       - "annually": ${annually}
-      - "income_amount": ${hh_income.amount(period_to_use=hh_income.period)}
-      - "household_additional_size": ${household_additional_size if need_income else ''}
+      - "income_amount": ${hh_income.total(times_per_year=hh_income.times_per_year)}
+      - "household_additional_size": ${household_additional_size if need_income and has_household_members else (0 if need_income else '')}
       - "household_size": ${household_size if need_income else ''}
       - "other_income": ${'Included above' if need_income else ''}
       - "unable_to_pay": ${yesno(need_supplement)}
@@ -737,15 +790,3 @@ content: |
   
   If this is a **new** case, you may not have one yet. You can tell the
   clerk what you know about the case if you're not sure.
----
-id: review fee waiver
-continue button field: review_fee_waiver
-continue button label: ${word("Resume")}
-question: |
-  Review your fee wiver
-subquestion: |
-  * [Edit fees and costs](${url_action("fees['Filing fee'].waive")})
-  * [Edit name](${url_action("users[0].name.first")})
-  * [Edit public benefits](${url_action("public_assistance_kinds")})
-  * [Edit income](${url_action("hh_income.value")})
-  * [Edit inability to pay](${url_action("can_afford")})  

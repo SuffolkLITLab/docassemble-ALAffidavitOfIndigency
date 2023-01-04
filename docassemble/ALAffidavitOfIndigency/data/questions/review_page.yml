@@ -1,0 +1,175 @@
+need:
+  - list_incomes
+id: affidavit to indigency review screen
+event: review_affidavit_of_indigency
+question: |
+  Review your answers
+review:
+  - Edit: trial_court
+    button: |
+      **Trial Court:**
+      ${ trial_court }
+  - Edit: case_name
+    button: |
+      **Case name**:
+      ${ case_name }
+  - Edit: docket_numbers[0]
+    button: |
+      **Docket number**:
+      ${ docket_numbers }
+  - Edit: users.revisit
+    button: |
+      **Users**
+
+      % for item in users:
+        * ${ item }
+      % endfor
+  - label: Edit
+    fields:
+      - public_assistance_kinds
+      - recompute:
+        - is_indigent
+        - need_income
+        - need_supplement
+    button: |
+      % if public_assistance_kinds.any_true():
+      **Public benefits**: ${ public_assistance_kinds.true_values() }
+      % else:
+      **No public benefits received**
+      % endif
+  - label: Edit
+    fields:
+      - can_afford
+      - recompute:
+        - is_indigent
+        - need_supplement
+    button: |
+      % if can_afford:
+      **I can afford the court costs**
+      % else:
+      **I cannot afford the court costs**
+      % endif
+  - Edit: user_grade_school_completed
+    button: |
+      **User grade school completed**:
+      ${ user_grade_school_completed }
+  - Edit: user_training
+    button: |
+      % if has_special_training:
+      **Special training**:
+      > ${ single_paragraph(user_training) }
+      % else:
+      **No special training**
+      % endif
+  - Edit: has_disabilities
+    button: |
+      % if has_disabilities:
+      **Disabilities**:
+
+      > ${ single_paragraph(user_disabilities) }
+      % else:
+      **No disabilities**
+      % endif
+  - Edit: users[0].nonemployment.revisit
+    button: |
+      **Income, not from employment**:
+
+      ${ list_incomes(users[0].nonemployment) }
+  - Edit: users[0].jobs.revisit
+    button: |
+      **Monthly income from jobs**
+      ${ currency(users[0].jobs.net_total(times_per_year=12)) }
+  - label: Edit
+    fields:
+      - household_additional_size
+      - recompute:
+        - update_household_number
+        - is_indigent
+        - need_supplement
+    button: |
+      **Number of dependents**:
+      ${ household_additional_size if has_household_members else 0 }
+  - label: Edit
+    fields:
+      - household.revisit
+      - recompute:
+        - update_household_number
+        - is_indigent
+        - need_supplement
+    button: |
+      % if len(household) == 0:
+      **No household members**
+      % else:
+      **Household member employment**:
+
+      ${ household }
+      % endif
+  - Edit: users[0].expenses.revisit
+    button: |
+      **Expenses**:
+
+      % for item in users[0].expenses:
+      * ${ item.display_name }: ${ currency(item.value) }
+      % endfor
+  - Edit: user_owns_home
+    button: |
+      **${ word("Owns home") if user_owns_home else word("Does not own home") }**
+
+      % if user_owns_home:
+      * value: ${ currency(user_home_value) }
+      % if user_has_home_debt:
+      * debt: ${ currency(user_home_debt) }
+      % endif
+      % endif
+  - Edit: user_owns_car
+    button: |
+      **${ word("Owns car") if user_owns_car else word("Does not own car") }**
+
+      % if user_owns_car:
+      * year: ${ user_car_year }
+      * make: ${ user_car_make }
+      * value: ${ currency(user_car_value) }
+      % if user_car_loan:
+      * debt: ${ currency(user_car_debt) }
+      % endif
+      % endif
+  - Edit: users[0].accounts.revisit
+    button: |
+      % if len(users[0].accounts) == 0:
+      **No accounts.**
+      % else:
+      **Accounts**:
+
+      % for acct in users[0].accounts:
+      * ${ acct.source } (${currency(acct.balance)})
+      % endfor
+      % endif
+  - Edit: user_owns_property
+    button: |
+      % if user_owns_property:
+      **Additional Property**:
+      
+      % for prop_type, prop_val in zip(user_property_type.split('\n'), user_property_value.split('\n')):
+      * ${ user_property_type }: ${ currency(user_property_value) }
+      % endfor
+      % else:
+      **Owns no additional property.**
+      % endif
+  - Edit: user_debts
+    button: |
+      **Debts**:
+      > ${ single_paragraph(user_debts) }
+  - Edit: miscellaneous_facts
+    button: |
+      **Miscellaneous facts**:
+      > ${ single_paragraph(miscellaneous_facts) }
+  - Edit: signature_date
+    button: |
+      **Date of signature**:
+      ${ signature_date }
+---
+code: |
+  has_household_members = len(household) > 0
+  household_additional_size = len(household)
+  household_size = household_additional_size + 1
+  update_household_number = True
