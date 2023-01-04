@@ -30,8 +30,10 @@ comment: |
 mandatory: True
 id: remove_old_indigency_doc
 code: |
-  if defined('affidavitofindigency_attachment') and isinstance(affidavitofindigency_attachment, ALDocument):
+  if defined('affidavitofindigency_attachment') and not isinstance(affidavitofindigency_attachment, ALDocumentBundle):
     del affidavitofindigency_attachment
+    del al_user_bundle
+    del al_court_bundle
 ---
 code: |
   # By default, assume this will be included in other interviews
@@ -681,8 +683,10 @@ code: |
   filing_fees_amount = fees['Filing fee'].amount
 ---
 objects:
-  - affidavitofindigency_attachment: ALDocumentBundle.using(elements=[affidavit_of_indigency_first_form, affidavit_of_indigency_supplement_attachment], filename="affidavit_of_indigency", title="Affidavit of Indigency")
   - affidavit_of_indigency_first_form: ALDocument.using(filename="affidavit_of_indigency", title="Affidavit of Indigency", has_addendum=False)
+---
+objects:
+  - affidavitofindigency_attachment: ALDocumentBundle.using(elements=[affidavit_of_indigency_first_form, affidavit_of_indigency_supplement_attachment], filename="affidavit_of_indigency", title="Affidavit of Indigency")
 ---
 code: |
   if al_form_type == "appeal":
