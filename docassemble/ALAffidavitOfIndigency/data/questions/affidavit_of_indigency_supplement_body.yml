@@ -367,6 +367,13 @@ fields:
   - no label: users[0].nonemployment.there_is_another
     datatype: yesnoradio
 ---
+id: any non-employment incomes
+question: |
+  Do you have any sources of income not from employment?
+fields:
+  - no label: users[0].nonemployment.there_are_any
+    datatype: yesnoradio
+---
 code: |
   def job_description():
     return comma_and_list([f"{job.source} {'(self-employed)' if job.is_self_employed else ('for ' + job.employer_name_address_phone())}" for job in users[0].jobs])

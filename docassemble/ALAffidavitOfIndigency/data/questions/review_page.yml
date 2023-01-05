@@ -28,6 +28,7 @@ review:
     fields:
       - public_assistance_kinds
       - recompute:
+        - reinit_hh_income
         - is_indigent
         - need_income
         - need_supplement
@@ -37,6 +38,15 @@ review:
       % else:
       **No public benefits received**
       % endif
+  - label: Edit
+    show if: need_income and not need_supplement
+    fields:
+      - hh_income.value
+      - recompute:
+        - household_income_qualifies
+        - need_supplement
+    button: |
+      **Total household income, after tax:** ${ currency(hh_income.value) }, ${ times_per_year(times_per_year_list, hh_income.times_per_year) }
   - label: Edit
     fields:
       - can_afford
@@ -173,3 +183,11 @@ code: |
   household_additional_size = len(household)
   household_size = household_additional_size + 1
   update_household_number = True
+---
+code: |
+  if not public_assistance_kinds.any_true() and defined("hh_income") and isinstance(hh_income, DAEmpty):
+    globals().pop('hh_income', None)
+    globals().pop('household_income_qualifies', None)
+  hh_income.value
+  household_income_qualifies
+  reinit_hh_income = True
