@@ -83,9 +83,6 @@ code: |
     affidavit_of_indigency_filing_court
 
     set_empty_fees
-    # trigger other computed values
-    # filing_fees_amount
-    annually
   ask_affidavit_questions = True
 ---
 depends on:
@@ -358,7 +355,6 @@ code: |
   if public_assistance_kinds.any_true():
     hh_income = DAEmpty()
     household_additional_size = DAEmpty()
-  set_empty_income = True
 ---
 id: user benefits
 question: |
@@ -444,7 +440,7 @@ subquestion: |
 id: select fees waived
 question: |
   What fees do you need the court to waive or pay?
-subquestion: | 
+subquestion: |
   You do not need to list every cost right now. You can file a separate fee waiver request for
   fees that come up later in your case.
 
@@ -669,16 +665,6 @@ code: |
     recipient_email = ""
 ---
 code: |
-  if not (hh_income.times_per_year in [52,26,12,1]):
-    monthly_income = hh_income.total(times_per_year=12)
-    hh_income.times_per_year = 12
-    hh_income.value = monthly_income
-  weekly = 'Yes' if need_income and hh_income.times_per_year == 52 else 'No'
-  biweekly = 'Yes' if need_income and hh_income.times_per_year == 26 else 'No'
-  monthly = 'Yes' if need_income and hh_income.times_per_year == 12 else 'No'
-  annually = 'Yes' if need_income and hh_income.times_per_year == 1 else 'No'
----
-code: |
   # filing_fees_amount = fees['E-filing'].amount + fees['Filing fee'].amount if defined("fees['Filing fee'].amount") and fees['Filing fee'].waive else fees['E-filing'].amount
   filing_fees_amount = fees['Filing fee'].amount
 ---
@@ -725,11 +711,11 @@ attachment:
       - "EAEDC": ${yesno(public_assistance_kinds['EAEDC'])}
       - "VA": ${yesno(public_assistance_kinds['VA Benefits'])}
       - "below_poverty_level": ${yesno(household_income_qualifies) if need_income else "No"}
-      - "weekly": ${weekly}
-      - "biweekly": ${biweekly}
-      - "monthly": ${monthly}
-      - "annually": ${annually}
-      - "income_amount": ${hh_income.total(times_per_year=hh_income.times_per_year)}
+      - "weekly": ${'Yes' if need_income and hh_income.times_per_year == 52 else 'No'}
+      - "biweekly": ${'Yes' if need_income and hh_income.times_per_year == 26 else 'No'}
+      - "monthly": ${'Yes' if need_income and hh_income.times_per_year not in [52, 26, 1] else 'No'}
+      - "annually": ${'Yes' if need_income and hh_income.times_per_year == 1 else 'No'}
+      - "income_amount": ${thousands(hh_income.total(times_per_year=12) if hh_income.times_per_year not in [52, 26, 1] else hh_income.total(times_per_year=hh_income.times_per_year), show_decimals=True)}
       - "household_additional_size": ${household_additional_size if need_income and has_household_members else (0 if need_income else '')}
       - "household_size": ${household_size if need_income else ''}
       - "other_income": ${'Included above' if need_income else ''}
