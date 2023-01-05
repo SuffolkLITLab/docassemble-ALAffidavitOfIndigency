@@ -1002,7 +1002,7 @@ attachments:
       - "user_car_year": ${ user_car_year if user_owns_car else ""}
       - "user_car_make": ${ user_car_make if user_owns_car else ""}
       - "user_car_value": ${ thousands(user_car_value, show_decimals=True) if user_owns_car else "" }
-      - "user_car_debt": ${ thousands(user_car_debt, show_decimals=True) if user_owns_car else "" }
+      - "user_car_debt": ${ thousands(user_car_debt, show_decimals=True) if user_owns_car and user_car_loan else "" }
       - "user_accounts_balance": ${ comma_and_list([currency(ac.balance) for ac in users[0].accounts], comma_string=',\n', and_string=',\n') }
       - "user_accounts_type": ${ list_accounts_source(users[0].accounts) }
       - "user_property_type": ${ user_property_type if user_owns_property else "" }
