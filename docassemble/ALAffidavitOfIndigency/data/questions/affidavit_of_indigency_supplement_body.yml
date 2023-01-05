@@ -289,7 +289,7 @@ fields:
 ---
 id: any non-employment incomes
 question: |
-  Do you have any of the below sources of income, not from employment?
+  Do you get money from any of the below sources, not from employment?
 fields:
   - no label: users[0].nonemployment.selected_types
     datatype: checkboxes
@@ -356,12 +356,10 @@ code: |
 ---
 id: any more non-employment incomes
 question: |
-  Do you have any additional sources of income not from employment?
+  Do you get any other money that is not from a job?
 subquestion: |
-  % if users[0].nonemployment.complete_elements() > 1:
-  You have already told us about your incomes from ${ list_incomes(users[0].nonemployment.complete_elements()) }.
-  % else:
-  You have already told us about your income from ${ list_incomes(users[0].nonemployment.complete_elements()) }.
+  % if len(users[0].nonemployment.complete_elements()) >= 1:
+  You have already told us about the money you get from ${ list_incomes(users[0].nonemployment.complete_elements()) }.
   % endif
 fields:
   - no label: users[0].nonemployment.there_is_another
@@ -369,7 +367,11 @@ fields:
 ---
 id: any non-employment incomes
 question: |
-  Do you have any sources of income not from employment?
+  Do you get any money that is not from a job?
+subquestion: |
+  % if defined("users[0].jobs") and len(users[0].jobs.complete_elements()) >= 1:
+  You have already told about your income from these jobs: ${ comma_and_list([job.source for job in users[0].jobs.complete_elements()]) }.
+  % endif
 fields:
   - no label: users[0].nonemployment.there_are_any
     datatype: yesnoradio
