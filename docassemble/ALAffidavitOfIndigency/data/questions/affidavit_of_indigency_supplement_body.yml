@@ -208,7 +208,7 @@ code: |
 ---
 code: |
   household[i].jobs[j].source
-  household[i].jobs[j].net
+  household[i].jobs[j].deduction
   household[i].jobs[j].employer.name.first
   household[i].jobs[j].times_per_year
   household[i].jobs[j].complete = True
@@ -491,14 +491,16 @@ fields:
   - How many hours does ${ household[i] } work in each period?: household[i].jobs[j].hours_per_period
     datatype: number
     show if: household[i].jobs[j].is_hourly
-  - What does ${ household[i] } get paid after taxes?: household[i].jobs[j].net
+  - What does ${ household[i] } get paid?: household[i].jobs[j].value
     datatype: currency
     show if: household[i].jobs[j].is_hourly
-  - What does ${ household[i] } gets paid hourly, after taxes?: household[i].jobs[j].net
+  - What does ${ household[i] } get paid hourly?: household[i].jobs[j].value
     datatype: currency
     show if:
       variable: household[i].jobs[j].is_hourly
       is: False
+  - How much is deducted from ${ household[i] }'s pay each period: household[i].jobs[j].deduction
+    datatype: currency
 ---
 generic object: ALItemizedJob
 question: |
