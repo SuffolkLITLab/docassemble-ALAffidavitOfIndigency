@@ -888,8 +888,10 @@ columns:
       row_item.name.full() if defined("row_item.name.first") else ""
   - Occupations: |
       comma_and_list(row_item.jobs.sources())
-  - Income: |
-      currency(row_item.jobs.net_total())
+  - Annual Gross Income: |
+      currency(row_item.jobs.total())
+  - Annual Deductions: |
+      currency(row_item.jobs.deductions())
 edit:
   - name.first
   - jobs.revisit
@@ -935,7 +937,7 @@ objects:
 ---
 comment: |
   According to this form and the main affidavit, everyone else in the household (besides yourself)
-  is considered a dependent. 
+  is considered a dependent.
   See https://github.com/SuffolkLITLab/docassemble-AffidavitOfIndigencySupplement/issues/26. 
 attachments:
   - name: affidavit to indigency supplement post interview instructions
@@ -946,7 +948,8 @@ attachments:
   - name: affidavit to indigency supplement attachment
     filename: affidavit_of_indigency_supplement.pdf
     variable name: affidavit_of_indigency_supplement_attachment[i]
-    editable: False
+    # Needs to be editable to view all of the text areas
+    editable: True
     skip undefined: False
     pdf template file: affidavit_of_indigency_supplement.pdf
     fields:
