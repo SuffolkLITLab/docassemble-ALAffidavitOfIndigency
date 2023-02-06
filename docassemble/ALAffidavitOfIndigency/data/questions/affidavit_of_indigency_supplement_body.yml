@@ -339,7 +339,7 @@ subquestion: |
   You have already told us about your ${ users[0].nonemployment.complete_elements().as_noun("income") } from ${ list_incomes(users[0].nonemployment) }.
   % endif
 fields:
-  - Times per year you recieve this income: users[0].nonemployment[i].times_per_year
+  - Times per year you receive this income: users[0].nonemployment[i].times_per_year
     input type: radio
     code: |
       times_per_year_list
