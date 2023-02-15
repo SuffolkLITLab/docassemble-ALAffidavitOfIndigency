@@ -5,6 +5,7 @@ include:
   - docassemble.MassAccess:massaccess.yml
   - affidavit_of_indigency_supplement_body.yml
   - review_page.yml
+  - docassemble.GithubFeedbackForm:embedded_review.yml
 ---
 modules:
   - docassemble.PovertyScale.poverty
@@ -424,6 +425,8 @@ subquestion: |
   1. Your income is below 125% of the Federal Poverty Level. For your household
      of ${household_size}, the limit is ${currency(household_income_limit/12)} per month. However, you told us your income is ${currency(hh_income.total(times_per_year=12))} per month.
   1. You must be unable to afford to pay the costs, or unable to do so without depriving you or your dependents the necessities of life, including food, shelter, and clothing. You said you are able to pay the costs.
+
+  ${ only_once_review_widget() }
 ---
 id: user does not qualify
 continue button field: doesnt_qualify_interstitial
