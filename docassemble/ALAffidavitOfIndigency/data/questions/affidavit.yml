@@ -98,6 +98,8 @@ subquestion: |
   
   ${action_button_html(url_action('review_affidavit_of_indigency'), icon='edit', label=word("Make changes"))}
 
+  ${ only_once_review_widget() }
+
   ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
 progress: 100
 section: download
