@@ -3,3 +3,5 @@ alkiln_tests*
 cucumber-report.txt
 debug_log.txt
 runtime_config.json
+*.egg-info
+__pycache__
