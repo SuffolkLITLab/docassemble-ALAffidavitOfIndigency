@@ -85,7 +85,7 @@ Scenario: aff income qualify to end
 Scenario: aff supp to end
   Given I start the interview at "affidavit.yml"
   And the maximum seconds for each Step in this Scenario is 20
-  And I get to the question id "final download" with this data:
+  And I get to the question id "you birthdate question" with this data:
     | var | value | trigger |
     | acknowledged_information_use['I accept the terms of use.'] | True | |
     | case_new_or_existing | new | |
@@ -108,24 +108,25 @@ Scenario: aff supp to end
     | users[0].address.zip | 02125 | |
     | trial_court | all_courts[80] | |
     | users[0].mobile_number | 1234567890 | |
-    | users[0].birthdate | 12/12/1998 | |
-    | user_grade_school_completed | 11th grade | |
-    | users[0].jobs.target_number | 0 | |
-    | users[0].nonemployment.selected_types['royalties'] | True | |
-    | users[0].nonemployment[i].times_per_year | 12 | users[0].nonemployment[0].value |
-    | users[0].nonemployment[i].value | 1000000 | users[0].nonemployment[0].value |
-    | has_special_training | False | |
-    | has_disabilities | False | |
-    | x.selected_types['rent'] | True | users[0].expenses.selected_types |
-    | x[i].value | 1000000 | users[0].expenses[0].value |
-    | x[i].times_per_year | 12 | users[0].expenses[0].value |
-    | user_owns_home | False | |
-    | user_owns_car | False | |
-    | users[0].accounts.there_are_any | False | |
-    | user_owns_property | False | |
-    | user_has_debts | False | |
-    | fees['Filing fee'].waive | True | |
-    | fees['Filing fee'].amount | 350 | |
-    | signature_choice | this_device | |
-    | users[0].signature | | |
-  Then I should see the phrase "Your form is ready to print and deliver to the court"
+# TODO(brycew): disable these tests until: https://github.com/SuffolkLITLab/ALKiln/issues/704
+#    | users[0].birthdate | 12/12/1998 | |
+#    | user_grade_school_completed | 11th grade | |
+#    | users[0].jobs.target_number | 0 | |
+#    | users[0].nonemployment.selected_types['royalties'] | True | |
+#    | users[0].nonemployment[i].times_per_year | 12 | users[0].nonemployment[0].value |
+#    | users[0].nonemployment[i].value | 1000000 | users[0].nonemployment[0].value |
+#    | has_special_training | False | |
+#    | has_disabilities | False | |
+#    | x.selected_types['rent'] | True | users[0].expenses.selected_types |
+#    | x[i].value | 1000000 | users[0].expenses[0].value |
+#    | x[i].times_per_year | 12 | users[0].expenses[0].value |
+#    | user_owns_home | False | |
+#    | user_owns_car | False | |
+#    | users[0].accounts.there_are_any | False | |
+#    | user_owns_property | False | |
+#    | user_has_debts | False | |
+#    | fees['Filing fee'].waive | True | |
+#    | fees['Filing fee'].amount | 350 | |
+#    | signature_choice | this_device | |
+#    | users[0].signature | | |
+#  Then I should see the phrase "Your form is ready to print and deliver to the court"
