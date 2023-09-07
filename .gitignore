@@ -1,5 +1,7 @@
 .env
+.envrc
 alkiln_tests*
+alkiln-*
 cucumber-report.txt
 debug_log.txt
 runtime_config.json
