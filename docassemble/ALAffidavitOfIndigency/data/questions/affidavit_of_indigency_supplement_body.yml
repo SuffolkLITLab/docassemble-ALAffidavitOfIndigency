@@ -417,7 +417,7 @@ id: education level
 question: |
   What is your highest level of education completed?
 fields:
-  - "User grade school completed": user_grade_school_completed
+  - "Grade school completed": user_grade_school_completed
     input type: dropdown
     choices:
       - No formal schooling
@@ -479,7 +479,7 @@ fields:
 ---
 id: regular job value
 question: |
-  What how much does ${ household[i] } get paid for ${ household[i].jobs[j].source }?
+  How much does ${ household[i] } get paid for ${ household[i].jobs[j].source }?
 fields:
   - Is the job hourly?: household[i].jobs[j].is_hourly
     datatype: yesnoradio
@@ -493,12 +493,12 @@ fields:
     show if: household[i].jobs[j].is_hourly
   - What does ${ household[i] } get paid?: household[i].jobs[j].value
     datatype: currency
-    show if: household[i].jobs[j].is_hourly
-  - What does ${ household[i] } get paid hourly?: household[i].jobs[j].value
-    datatype: currency
     show if:
       variable: household[i].jobs[j].is_hourly
       is: False
+  - What does ${ household[i] } get paid hourly?: household[i].jobs[j].value
+    datatype: currency
+    show if: household[i].jobs[j].is_hourly
   - How much is deducted from ${ household[i] }'s pay each period: household[i].jobs[j].deduction
     datatype: currency
 ---
@@ -529,7 +529,7 @@ id: special training
 question: |
   Do you have any special job training?
 subquestion: |
-  For example, do you have any trade or professional certifications and licenses.
+  For example, do you have any trade or professional certifications and licenses?
 fields:
   - Any special job training?: has_special_training
     datatype: yesnoradio
@@ -786,7 +786,7 @@ sets:
 id: employer
 generic object: ALIndividual
 question: |
-  Who is the employer of ${ x } ${ x.jobs[i].source }
+  Who is the employer of ${ x } for ${ x.jobs[i].source }
 fields:
   - ${ x } is self employed: x.jobs[i].is_self_employed
     datatype: yesno
