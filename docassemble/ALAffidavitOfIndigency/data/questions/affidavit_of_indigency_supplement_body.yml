@@ -47,7 +47,7 @@ objects:
       object_type=ALItemizedJob.using(employer_type=ALIndividual),
       ask_number=True)
   - users[i].nonemployment: ALIncomeList
-  - users[i].expenses: ALExpenseList.using(auto_gather=False, complete_attribute="exists")
+  - users[i].expenses: ALExpenseList.using(auto_gather=False)
   - users[i].accounts: ALAssetList.using(complete_attribute='balance')
 ---
 objects:
@@ -579,6 +579,29 @@ subquestion: |
 
   ${ users[0].expenses.add_action() }
 field: review_expenses_screen
+---
+comment: |
+  Overridden from al_income, because we need to set `exists` to true.
+id: expense information
+question: |
+  How much do you spend on your ${ ordinal(i) } household expense?
+fields: 
+  - Type of expense: users[0].expenses[i].source
+    code: |
+      expense_terms_ordered
+  - Other (explain): users[0].expenses[i].source
+    show if:
+      variable: users[0].expenses[i].source
+      is: other
+  - Amount: users[0].expenses[i].value
+    datatype: currency
+  - How often do you pay this amount?: users[0].expenses[i].times_per_year
+    default: 12
+    code: |
+      times_per_year_for_expenses
+validation code: |
+  users[0].expenses[i].exists = True
+  users[0].expenses[i].display_name = expense_terms.get(users[0].expenses[i].source, users[0].expenses[i].source)
 ---
 id: income review
 question: |
