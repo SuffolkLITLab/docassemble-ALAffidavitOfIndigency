@@ -1001,25 +1001,25 @@ attachments:
       - "user_income_after_tax1": ${ thousands(users[0].jobs.net_total(times_per_year=12) + users[0].nonemployment.total(times_per_year=12), show_decimals=True) }
       - "user_househould_member_work_name": ${ list_household(household) }
       - "user_income_after_tax2": ${ thousands(users[0].jobs.net_total(times_per_year=12) + users[0].nonemployment.total(times_per_year=12), show_decimals=True) }
-      - "user_expense_rent": ${ thousands(users[0].expenses.total(source=["rent"]), show_decimals=True) }
-      - "user_expense_uninsured_medical": ${ thousands(users[0].expenses.total(source=["uninsured_medical"]), show_decimals=True) }
-      - "user_expense_childcare": ${ thousands(users[0].expenses.total(source=["childcare"]), show_decimals=True) }
-      - "user_expense_food": ${ thousands(users[0].expenses.total(source=["food"]), show_decimals=True) }
-      - "user_expense_electricity": ${ thousands(users[0].expenses.total(source=["electricity"]), show_decimals=True) }
-      - "user_expense_education": ${ thousands(users[0].expenses.total(source=["child_education"]), show_decimals=True) }
-      - "user_expense_child_support": ${ thousands(users[0].expenses.total(source=["child_support"]), show_decimals=True) }
-      - "user_expense_gas": ${ thousands(users[0].expenses.total(source=["gas"]), show_decimals=True) }
-      - "user_expense_oil": ${ thousands(users[0].expenses.total(source=["oil"]), show_decimals=True) }
-      - "user_expense_clothing": ${ thousands(users[0].expenses.total(source=["clothing"]), show_decimals=True) }
-      - "user_expense_water": ${ thousands(users[0].expenses.total(source=["water"]), show_decimals=True) }
-      - "user_expense_laundry": ${ thousands(users[0].expenses.total(source=["laundry"]), show_decimals=True) }
-      - "user_expense_telephone": ${ thousands(users[0].expenses.total(source=["telephone"]), show_decimals=True) }
-      - "user_expense_car_insurance": ${ thousands(users[0].expenses.total(source=["car_insurance"]), show_decimals=True) }
-      - "user_expense_health_insurance": ${ thousands(users[0].expenses.total(source=["health_insurance"]), show_decimals=True) }
-      - "user_expense_transportation": ${ thousands(users[0].expenses.total(source=["transportation"]), show_decimals=True) }
-      - "user_expense_other_amount": ${ thousands(users[0].expenses.total(exclude_source=expenses_on_form), show_decimals=True) }
+      - "user_expense_rent": ${ thousands(users[0].expenses.total(source=["rent"], times_per_year=12), show_decimals=True) }
+      - "user_expense_uninsured_medical": ${ thousands(users[0].expenses.total(source=["uninsured_medical"], times_per_year=12), show_decimals=True) }
+      - "user_expense_childcare": ${ thousands(users[0].expenses.total(source=["childcare"], times_per_year=12), show_decimals=True) }
+      - "user_expense_food": ${ thousands(users[0].expenses.total(source=["food"], times_per_year=12), show_decimals=True) }
+      - "user_expense_electricity": ${ thousands(users[0].expenses.total(source=["electricity"], times_per_year=12), show_decimals=True) }
+      - "user_expense_education": ${ thousands(users[0].expenses.total(source=["child_education"], times_per_year=12), show_decimals=True) }
+      - "user_expense_child_support": ${ thousands(users[0].expenses.total(source=["child_support"], times_per_year=12), show_decimals=True) }
+      - "user_expense_gas": ${ thousands(users[0].expenses.total(source=["gas"], times_per_year=12), show_decimals=True) }
+      - "user_expense_oil": ${ thousands(users[0].expenses.total(source=["oil"], times_per_year=12), show_decimals=True) }
+      - "user_expense_clothing": ${ thousands(users[0].expenses.total(source=["clothing"], times_per_year=12), show_decimals=True) }
+      - "user_expense_water": ${ thousands(users[0].expenses.total(source=["water"], times_per_year=12), show_decimals=True) }
+      - "user_expense_laundry": ${ thousands(users[0].expenses.total(source=["laundry"], times_per_year=12), show_decimals=True) }
+      - "user_expense_telephone": ${ thousands(users[0].expenses.total(source=["telephone"], times_per_year=12), show_decimals=True) }
+      - "user_expense_car_insurance": ${ thousands(users[0].expenses.total(source=["car_insurance"], times_per_year=12), show_decimals=True) }
+      - "user_expense_health_insurance": ${ thousands(users[0].expenses.total(source=["health_insurance"], times_per_year=12), show_decimals=True) }
+      - "user_expense_transportation": ${ thousands(users[0].expenses.total(source=["transportation"], times_per_year=12), show_decimals=True) }
+      - "user_expense_other_amount": ${ thousands(users[0].expenses.total(exclude_source=expenses_on_form, times_per_year=12), show_decimals=True) }
       - "user_expense_other": ${ comma_and_list(set(users[0].expenses.sources()).difference(expenses_on_form)) }
-      - "user_expense_total": ${ thousands(users[0].expenses.total(), show_decimals=True) }
+      - "user_expense_total": ${ thousands(users[0].expenses.total(times_per_year=12), show_decimals=True) }
       - "user_income_net": ${ thousands(users[0].jobs.net_total(times_per_year=12) + users[0].nonemployment.total(times_per_year=12) - users[0].expenses.total(), show_decimals=True) }
       - "user_owns_home_yes": ${ user_owns_home }
       - "user_owns_home_no": ${ not user_owns_home }
