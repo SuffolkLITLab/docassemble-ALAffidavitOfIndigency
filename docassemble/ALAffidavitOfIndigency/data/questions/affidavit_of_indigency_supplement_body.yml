@@ -268,7 +268,7 @@ fields:
 code: |
   def full_household_income():
     total_from_user = users[0].jobs.net_total(times_per_year=12) + users[0].nonemployment.total(times_per_year=12)
-    total_from_others = sum([per.jobs.net_total() for per in household])
+    total_from_others = sum([per.jobs.net_total(times_per_year=12) for per in household])
     return total_from_user + total_from_others
 ---
 code: |
@@ -1020,7 +1020,7 @@ attachments:
       - "user_expense_other_amount": ${ thousands(users[0].expenses.total(exclude_source=expenses_on_form, times_per_year=12), show_decimals=True) }
       - "user_expense_other": ${ comma_and_list(set(users[0].expenses.sources()).difference(expenses_on_form)) }
       - "user_expense_total": ${ thousands(users[0].expenses.total(times_per_year=12), show_decimals=True) }
-      - "user_income_net": ${ thousands(users[0].jobs.net_total(times_per_year=12) + users[0].nonemployment.total(times_per_year=12) - users[0].expenses.total(), show_decimals=True) }
+      - "user_income_net": ${ thousands(users[0].jobs.net_total(times_per_year=12) + users[0].nonemployment.total(times_per_year=12) - users[0].expenses.total(times_per_year=12), show_decimals=True) }
       - "user_owns_home_yes": ${ user_owns_home }
       - "user_owns_home_no": ${ not user_owns_home }
       - "user_home_value": ${ thousands(user_home_value, show_decimals=True) if user_owns_home else "" }
