@@ -1,0 +1,32 @@
+name: Annual update interview issue
+on:
+  workflow_dispatch: # Allows manual triggering
+  schedule:
+    - cron: "33 3 1 7 *" # At 3:33am every August 1st
+
+jobs:
+  create_issue:
+    name: Create update-interview issue
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Create update-interview issue
+        run: |
+          new_issue_url=$(gh issue create \
+            --title "$TITLE" \
+            --body "$BODY")
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TITLE: Check this interview for updates
+          BODY: |
+            - [ ] Check for errors by running through the interview several times. Use different inputs each time.
+            - [ ] Check for new versions of the PDF or DOCX forms in the `data/templates` folder.
+            - [ ] Check for updates to the law(s) on which the interview is based.
+            
+            If any of the above reveal a need to update this interview, do the following:
+            * Describe the updates necessary in a comment on this issue.
+            * Un-assign yourself from this issue
+            * Change the project selection for this issue to the Interview Upkeep project.
+            
