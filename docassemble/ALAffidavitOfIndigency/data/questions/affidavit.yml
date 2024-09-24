@@ -3,61 +3,55 @@ include:
   - affidavit_body.yml
 ---
 metadata:
-  title: |
-    Affidavit of Indigency and Supplement
-  short title: |
-    Affidavit of Indigency
+  title: Affidavit of Indigency (fee waiver)
+  short title: Affidavit of Indigency (fee waiver)
+  description: |
+    If you cannot afford to pay court fees or other costs related to your court case, this form will help you ask the court to waive the fees.
+    
+    Depending on the kind of income you get, you may need to give information about your income, expenses, assets, and debts. You will also need to provide information about the case you are involved in.
+
+    This interview can make the Affidavit of Indigency and the Supplement to the Affidavit of Indigency form, if you need it.
+  can_I_use_this_form: |
+    You can use this interview if you are asking the court to waive fees for a court case in Massachusetts.
+
+    The fees you can get waived include costs for:
+
+    - Filing
+    - Depositions
+    - Expert witnesses
+    - Appeals
+    - Serving court papers
+    - Transcripts
+    - Copies or recordings of court records
+    - Other costs related to your case
+  before_you_start: |
+    Before you start, you will need to know:
+
+    - The name of the court where your case is happening
+    - The docket number of your case
+    - Your income, and you may need to know your expenses, assets, and debts
+  maturity: production
+  estimated_completion_minutes: 15
+  estimated_completion_delta: 5
+  languages:
+    - en
+  help_page_url: https://www.masslegalhelp.org/courts-hearings-language-rights/courts-massachusetts/affidavit-indigency-if-you-cant-afford
+  help_page_title: Affidavit of Indigency if you can't afford Massachusetts court costs
+  LIST_topics:
+    - CO-07-06-01-00
+  tags:
+    - CO-07-06-01-00
+  jurisdiction: NAM-US-MA+MA
+  review_date: 2024-09-01
+  form_titles:
+    - Affidavit of Indigency
+    - Supplement to the Affidavit of Indigency
+  fees:
+    - Filing fee: 0.0
   authors:
     - Quinten Steenhuis
     - Bryce Willey
     - Samuel Roth
-  description: |
-    If you cannot pay court fees you can use this online interview to fill out an affidavit of indigency.
-
-    In some cases the fee waiver is automatic and you will be asked fewer questions. In other cases we may need to ask you for detailed information about your income and expenses.
-    
-    An affidavit of indigency is never filed on its own. Make sure the court knows what case to attach your affidavit to. You may want to call the court and talk to the clerk before you submit your affidavit. We will give you the number of the court clerk at the end of this form.
-  can_I_use_this_form: |
-    If you are asking for help with **new** costs you can use this form. If you have already paid court fees the court cannot give you a refund.
-  before_you_start: |
-    The court can decide not to charge you costs that you would normally pay to the court. Examples include:
-
-    * Filing fees
-    * Costs for recordings and transcripts of court hearings
-    
-    It can also help you pay for certain things that you would pay to someone else. For example:
-
-    * The cost of serving a witness or the other party
-    * The cost of taking a deposition
-    * An appeal bond
-    * The cost of an expert witness
-    
-    If you ask for something else that is important for your trial, the court may be able to pay for it. But it may not.
-
-    You cannot use this form to ask the court to pay for an attorney to represent you.
-  maturity: production
-  estimated_completion_minutes: 10
-  estimated_completion_delta: 60
-  languages:
-    - en
-  help_page_url: https://www.masslegalhelp.org/courts-hearings-language-rights/courts-massachusetts/how-fill-out-affidavit-indigency
-  help_page_title: How to fill out an Affidavit of Indigency
-  LIST_topics: # Preferred
-    - CO-07-06-01-00
-  tags: # Should be used if LIST_topics not populated
-    - CO-07-06-01-00
-  # Use LMSS jurisdiction codes?
-  jurisdiction: NAM-US-US+MA
-  original_form: https://www.mass.gov/doc/affidavit-of-indigency/download
-  review_date: 2024-06-13
-  form_titles:
-    - Affidavit of Indigency
-    - Supplement to Affidavit of Indigency   
-  form_numbers: # Not all forms have an assigned number
-  fees:
-    - Filing fee: 0.00
-  update_notes: |
-    Reviewed in 2024 and found no form or law changes that require updates.
 ---
 code: |
   interview_short_title = "Ask the court to waive fees"
