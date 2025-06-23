@@ -109,6 +109,9 @@ code: |
     if affidavit_is_standalone:
       nav.set_section('review_assets_and_debts')
     user_owns_home
+    user_has_home_debt
+    if user_has_home_debt:
+      user_home_debt_amount
     user_owns_car
     users[0].accounts.gather()
     taxes_on_form
@@ -682,23 +685,40 @@ subquestion: |
 fields:
   - Job title: users[0].jobs[i].source
 ---
-id: home ownership
+id: home_ownership
 question: |
   Do you own a home?
 fields:
-  - no label: user_owns_home
+  - field: user_owns_home
+    label: "Do you own a home?"
     datatype: yesnoradio
-  - "What is the value of the home?": user_home_value
-    show if: user_owns_home
+
+  - field: user_home_value
+    label: "What is the value of the home?"
     datatype: currency
     min: 0
-  - Are there any remaining loans on the home?: user_has_home_debt
-    show if: user_owns_home
+    show if:
+      variable: user_owns_home
+      is: True
+
+  - field: user_has_home_debt
+    label: "Are there any remaining loans on the home?"
     datatype: yesnoradio
-  - How much do you have to pay on the remaining loans?: user_home_debt
-    show if: user_has_home_debt
+    show if:
+      variable: user_owns_home
+      is: True
+---
+---
+id: home_debt_amount
+question: |
+  How much do you have to pay on the remaining loans?
+fields:
+  - field: user_home_debt_amount
+    label: "How much do you have to pay on the remaining loans?"
     datatype: currency
     min: 0
+    required: False
+precondition: user_owns_home and user_has_home_debt
 ---
 id: car ownership
 question: |
@@ -757,13 +777,12 @@ question: |
 subquestion: |
   % if (user_owns_car and user_car_loan) or (user_owns_home and user_has_home_debt):
   You have already told us about your:
-
-  % if user_owns_car and user_car_loan:
-  * car loan for ${ currency(user_car_debt) }
-  % endif
-  % if user_owns_home and user_has_home_debt:
-  * home loan for ${ currency(user_home_debt) }
-  % endif
+    % if user_owns_car and user_car_loan:
+      * car loan for ${ currency(user_car_debt) }
+    % endif
+    % if user_owns_home and user_has_home_debt:
+      * home loan for ${ currency(user_home_debt_amount) }
+    % endif
   % endif
 fields:
   - no label: user_has_debts
@@ -1024,7 +1043,7 @@ attachments:
       - "user_owns_home_yes": ${ user_owns_home }
       - "user_owns_home_no": ${ not user_owns_home }
       - "user_home_value": ${ thousands(user_home_value, show_decimals=True) if defined("user_home_value") and user_owns_home else "" }
-      - "user_home_debt": ${ thousands(user_home_debt, show_decimals=True) if defined("user_home_debt") and user_owns_home and user_has_home_debt else "" }
+      - "user_home_debt": ${ thousands(user_home_debt_amount, show_decimals=True) if defined("user_home_debt_amount") and user_owns_home and user_has_home_debt else "" }
       - "user_owns_car_yes": ${ user_owns_car }
       - "user_owns_car_no": ${ not user_owns_car }
       - "user_car_year": ${ user_car_year if user_owns_car else ""}
