@@ -1,6 +1,6 @@
 import os
 import sys
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages
 from fnmatch import fnmatchcase
 from distutils.util import convert_path
 
@@ -46,16 +46,14 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
 setup(name='docassemble.ALAffidavitOfIndigency',
       version='2.1.6',
       description=('The Massachusetts Affidavit of Indigency, or Fee waiver form'),
-      long_description='Forked from https://github.com/SuffolkLITLab/docassemble-AffidavitofIndigencyMAVC to migrate to the ALDocument class',
+      long_description='# Massachusetts Application for Indigency\r\n\r\nThis is a Docassemble interview to complete a Massachusetts application for indigency (request for a fee waiver) form online. The live interview can be found at [courtformsonline.org/ma/forms/affidavit-of-indigency-fee-waiver](https://courtformsonline.org/ma/forms/affidavit-of-indigency-fee-waiver)\r\n\r\nThis interview was forked from [SuffolkLITLab/docassemble-AffidavitofIndigencyMAVC](https://github.com/SuffolkLITLab/docassemble-AffidavitofIndigencyMAVC) to migrate it to the ALDocument class.\r\n',
       long_description_content_type='text/markdown',
-      author='Quinten Steenhuis',
-      author_email='massaccess@suffolk.edu',
+      author='Suffolk LIT Lab',
+      author_email='litlab@suffolk.edu',
       license='The MIT License (MIT)',
       url='https://courtformsonline.org',
-      packages=find_packages(),
-      namespace_packages=['docassemble'],
-      install_requires=['docassemble.AssemblyLine', 'docassemble.MassAccess', 'docassemble.PovertyScale', 'docassemble.ALToolbox>=0.7.1', 'docassemble.ALMassachusetts>=0.1.2',
-          'docassemble.GithubFeedbackForm>=0.2.1'],
+      packages=find_namespace_packages(),
+      install_requires=[],
       zip_safe=False,
       package_data=find_package_data(where='docassemble/ALAffidavitOfIndigency/', package='docassemble.ALAffidavitOfIndigency'),
      )
