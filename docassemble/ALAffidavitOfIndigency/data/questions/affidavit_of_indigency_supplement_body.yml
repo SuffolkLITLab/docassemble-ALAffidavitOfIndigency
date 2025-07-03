@@ -109,9 +109,6 @@ code: |
     if affidavit_is_standalone:
       nav.set_section('review_assets_and_debts')
     user_owns_home
-    user_has_home_debt
-    if user_has_home_debt:
-      home_debt_amount
     user_owns_car
     users[0].accounts.gather()
     taxes_on_form
@@ -685,40 +682,26 @@ subquestion: |
 fields:
   - Job title: users[0].jobs[i].source
 ---
-id: home_ownership
+id: home ownership
 question: |
   Do you own a home?
 fields:
-  - field: user_owns_home
-    label: "Do you own a home?"
+  - no label: user_owns_home
     datatype: yesnoradio
-
-  - field: user_home_value
-    label: "What is the value of the home?"
+  - "What is the value of the home?": user_home_value
+    show if: user_owns_home
     datatype: currency
+    required: True
     min: 0
-    show if:
-      variable: user_owns_home
-      is: True
-
-  - field: user_has_home_debt
-    label: "Are there any remaining loans on the home?"
+  - Are there any remaining loans on the home?: user_has_home_debt
+    show if: user_owns_home
     datatype: yesnoradio
-    show if:
-      variable: user_owns_home
-      is: True
----
----
-id: home_debt_amount
-question: |
-  How much do you have to pay on the remaining loans?
-fields:
-  - field: user_home_debt_amount
-    label: "How much do you have to pay on the remaining loans?"
+    required: True
+  - How much do you have to pay on the remaining loans?: user_home_debt
+    show if: user_has_home_debt
     datatype: currency
+    required: True
     min: 0
-    required: False
-precondition: user_owns_home and user_has_home_debt
 ---
 id: car ownership
 question: |
@@ -777,12 +760,13 @@ question: |
 subquestion: |
   % if (user_owns_car and user_car_loan) or (user_owns_home and user_has_home_debt):
   You have already told us about your:
-    % if user_owns_car and user_car_loan:
-      * car loan for ${ currency(user_car_debt) }
-    % endif
-    % if user_owns_home and user_has_home_debt:
-      * home loan for ${ currency(user_home_debt_amount) }
-    % endif
+
+  % if user_owns_car and user_car_loan:
+  * car loan for ${ currency(user_car_debt) }
+  % endif
+  % if user_owns_home and user_has_home_debt:
+  * home loan for ${ currency(user_home_debt) }
+  % endif
   % endif
 fields:
   - no label: user_has_debts
@@ -1042,14 +1026,14 @@ attachments:
       - "user_income_net": ${ thousands(users[0].jobs.net_total(times_per_year=12) + users[0].nonemployment.total(times_per_year=12) - users[0].expenses.total(times_per_year=12), show_decimals=True) }
       - "user_owns_home_yes": ${ user_owns_home }
       - "user_owns_home_no": ${ not user_owns_home }
-      - "user_home_value": ${ thousands(user_home_value, show_decimals=True) if user_owns_home else "" }
-      - "user_home_debt": ${ thousands(user_home_debt_amount, show_decimals=True) if user_owns_home else ""}
+      - "user_home_value": ${ thousands(user_home_value, show_decimals=True) if defined("user_home_value") and user_owns_home else "" }
+      - "user_home_debt": ${ thousands(user_home_debt, show_decimals=True) if defined("user_home_debt") and user_owns_home and user_has_home_debt else "" }
       - "user_owns_car_yes": ${ user_owns_car }
       - "user_owns_car_no": ${ not user_owns_car }
       - "user_car_year": ${ user_car_year if user_owns_car else ""}
       - "user_car_make": ${ user_car_make if user_owns_car else ""}
-      - "user_car_value": ${ thousands(user_car_value, show_decimals=True) if user_owns_car else "" }
-      - "user_car_debt": ${ thousands(user_car_debt, show_decimals=True) if user_owns_car and user_car_loan else "" }
+      - "user_car_value": ${ thousands(user_car_value, show_decimals=True) if defined("user_car_value") and user_owns_car else "" }
+      - "user_car_debt": ${ thousands(user_car_debt, show_decimals=True) if defined("user_car_debt") and user_owns_car and user_car_loan else "" }
       - "user_accounts_balance": ${ comma_and_list([currency(ac.balance) for ac in users[0].accounts], comma_string=',\n', and_string=',\n') }
       - "user_accounts_type": ${ list_accounts_source(users[0].accounts) }
       - "user_property_type": ${ user_property_type if user_owns_property else "" }
