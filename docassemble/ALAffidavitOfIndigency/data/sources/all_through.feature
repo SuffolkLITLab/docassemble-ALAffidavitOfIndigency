@@ -4,7 +4,7 @@ Feature: Go through the entire interview
 Scenario: Standalone affidavit starts
   Given the max seconds for each Step is 30
   And I start the interview at "affidavit.yml"
-  Given I set the var "acknowledged_information_use['I accept the terms of use.']" to "True"
+  Given I set the var "acknowledged_information_use" to "True"
   Then I tap to continue
 
 @alaffidavit @aaoi2 @fast
@@ -13,7 +13,7 @@ Scenario: Standalone affidavit kicks out if for old cost
   And I start the interview at "affidavit.yml"
   And I get to the question id "exit can't pay back fees" with this data:
     | var | value | trigger |
-    | acknowledged_information_use['I accept the terms of use.'] | True | |
+    | acknowledged_information_use | True | |
     | case_new_or_existing | back_fees | |
   Then I should see the phrase "This form is not right for you"
   
@@ -24,7 +24,7 @@ Scenario: Standalone affidavit runs to completion
   And I start the interview at "affidavit.yml"
   And I get to the question id "final download" with this data:
     | var | value | trigger |
-    | acknowledged_information_use['I accept the terms of use.'] | True | |
+    | acknowledged_information_use | True | |
     | case_new_or_existing | new | |
     | dont_know_docket_number | True | |
     | docket_numbers[0] | New case | |
@@ -53,7 +53,7 @@ Scenario: aff income qualify to end
   And the maximum seconds for each Step in this Scenario is 20
   And I get to the question id "qualify on face" with this data:
     | var | value | trigger |
-    | acknowledged_information_use['I accept the terms of use.'] | True | |
+    | acknowledged_information_use | True | |
     | case_new_or_existing | new | |
     | dont_know_docket_number | True | |
     | docket_numbers[0] | New case | |
@@ -87,7 +87,7 @@ Scenario: aff supp to end
   And the maximum seconds for each Step in this Scenario is 20
   And I get to the question id "you birthdate question" with this data:
     | var | value | trigger |
-    | acknowledged_information_use['I accept the terms of use.'] | True | |
+    | acknowledged_information_use | True | |
     | case_new_or_existing | new | |
     | dont_know_docket_number | True | |
     | docket_numbers[0] | New case | |
