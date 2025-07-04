@@ -70,8 +70,9 @@ code: |
     qualify_interstitial
     if need_supplement:
       interview_order_affidavit_of_indigency_supplement
-    if affidavit_is_standalone:
-      nav.set_section("fees_section")
+    if not need_supplement:
+      if affidavit_is_standalone:
+        nav.set_section("fees_section")
     fees['Filing fee'].waive
     fees['Costs of an expert witness'].waive
     fees_interstitial
