@@ -40,7 +40,7 @@ Scenario: Standalone affidavit runs to completion
     | users[0].address.city | Boston | |
     | users[0].address.state | MA | |
     | users[0].address.zip | 02125 | |
-    | users[0].mobile_number | 7813810756 | |
+    | users[0].mobile_number | 4092345678 | |
     | trial_court | all_courts[80] | |
     | signature_choice | this_device | |
     | users[0].signature | | |
@@ -73,7 +73,7 @@ Scenario: aff income qualify to end
     | users[0].address.city | Boston | |
     | users[0].address.state | MA | |
     | users[0].address.zip | 02125 | |
-    | users[0].mobile_number | 7813810756 | |
+    | users[0].mobile_number | 4092345678 | |
     | trial_court | all_courts[80] | |
     | signature_choice | this_device | |
     | users[0].signature | | |
@@ -104,7 +104,7 @@ Scenario: aff supp to end
     | users[0].address.state | MA | |
     | users[0].address.zip | 02125 | |
     | trial_court | all_courts[80] | |
-    | users[0].mobile_number | 7813810756 | |
+    | users[0].mobile_number | 4092345678 | |
     | users[0].birthdate | 12/12/1998 | |
     | user_grade_school_completed | 11th grade | |
     | users[0].jobs.target_number | 0 | |
