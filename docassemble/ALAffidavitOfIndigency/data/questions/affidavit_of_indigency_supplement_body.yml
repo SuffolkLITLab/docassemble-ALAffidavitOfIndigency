@@ -109,6 +109,9 @@ code: |
     if affidavit_is_standalone:
       nav.set_section('review_assets_and_debts')
     user_owns_home
+    user_has_home_debt
+    if user_has_home_debt:
+      user_home_debt
     user_owns_car
     users[0].accounts.gather()
     taxes_on_form
@@ -691,13 +694,16 @@ fields:
   - "What is the value of the home?": user_home_value
     show if: user_owns_home
     datatype: currency
+    required: True
     min: 0
   - Are there any remaining loans on the home?: user_has_home_debt
     show if: user_owns_home
     datatype: yesnoradio
+    required: True
   - How much do you have to pay on the remaining loans?: user_home_debt
     show if: user_has_home_debt
     datatype: currency
+    required: True
     min: 0
 ---
 id: car ownership
