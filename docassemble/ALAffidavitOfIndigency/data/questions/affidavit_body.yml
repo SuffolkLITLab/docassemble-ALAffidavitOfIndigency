@@ -342,8 +342,9 @@ code: |
       "Probate and Family Court",
       "Juvenile Court",
       "Land Court",
-      # "Appeals Court",
-      ]
+      "Appeals Court",
+      "Supreme Judicial Court",
+  ]
 ---
 code: |
   for fee in fees:
