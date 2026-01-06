@@ -44,7 +44,7 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
     return out
 
 setup(name='docassemble.ALAffidavitOfIndigency',
-      version='2.1.6',
+      version='2.2.0',
       description=('The Massachusetts Affidavit of Indigency, or Fee waiver form'),
       long_description='# Massachusetts Application for Indigency\r\n\r\nThis is a Docassemble interview to complete a Massachusetts application for indigency (request for a fee waiver) form online. The live interview can be found at [courtformsonline.org/other/#indigency](https://courtformsonline.org/other/#indigency)\r\n\r\nThis interview was forked from [SuffolkLITLab/docassemble-AffidavitofIndigencyMAVC](https://github.com/SuffolkLITLab/docassemble-AffidavitofIndigencyMAVC) to migrate it to the ALDocument class.\r\n',
       long_description_content_type='text/markdown',
