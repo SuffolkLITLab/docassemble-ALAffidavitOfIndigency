@@ -76,6 +76,13 @@ code: |
   set_parts(subtitle=str(users))
   users[0].address.address
   users[0].birthdate
+  affidavit_supplement_legal_logic
+  if affidavit_is_standalone:
+    nav.set_section('download_form')
+  signature_date
+  interview_order_affidavit_of_indigency_supplement = True
+---
+code: |
   user_grade_school_completed
   has_disabilities
   has_household_members
@@ -118,10 +125,7 @@ code: |
     user_owns_property
     user_has_debts
     miscellaneous_facts
-    if affidavit_is_standalone:
-      nav.set_section('download_form')
-    signature_date
-  interview_order_affidavit_of_indigency_supplement = True
+  affidavit_supplement_legal_logic = True
 ---
 variable name: expense_terms
 data: !!omap
