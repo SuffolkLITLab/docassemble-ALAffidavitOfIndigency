@@ -1,3 +1,34 @@
 [build-system]
-requires = ["setuptools"]
+requires = [
+    "setuptools==80.9.0",
+]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "docassemble.ALAffidavitOfIndigency"
+version = "2.2.1"
+description = "The Massachusetts Affidavit of Indigency, or Fee waiver form"
+readme = "README.md"
+authors = [
+    { name="Suffolk Legal Innovation and Technology Lab", email="litlab@suffolk.edu" },
+]
+dependencies = [
+    "docassemble.AssemblyLine",
+    "docassemble.MassAccess",
+    "docassemble.PovertyScale",
+    "docassemble.ALToolbox>=0.7.1",
+    "docassemble.ALMassachusetts>=0.2.0",
+    "docassemble.GithubFeedbackForm>=0.2.1"
+]
+license="MIT"
+license-files = [
+    "LICENSE"
+]
+
+[project.urls]
+Homepage = "https://courtformsonline.org"
+
+[tool.setuptools.packages.find]
+where = [
+    ".",
+]
