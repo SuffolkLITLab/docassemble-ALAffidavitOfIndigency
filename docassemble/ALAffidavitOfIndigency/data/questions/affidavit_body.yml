@@ -670,6 +670,18 @@ objects:
   - affidavitofindigency_attachment: ALDocumentBundle.using(elements=[affidavit_of_indigency_first_form, affidavit_of_indigency_supplement_attachment], filename="affidavit_of_indigency", title="Affidavit of Indigency")
 ---
 code: |
+  affidavitofindigency_attachment.filing_type_filters = [
+    CodeType('1402'),
+    'Indigency affidavit and request for waiver', # the full title of the for
+    'Affidavit of Indigency',
+    'Indigency Affidavit', # Used for Appeals
+    ['Affidavit', 'Indigency']
+  ]
+---
+code: |
+  affidavitofindigency_attachment.document_type_filters = ['impounded'] # default impound
+---
+code: |
   if al_form_type == "appeal":
     affidavit_of_indigency_filing_court = showifdef('appeals_court', trial_court)
   else:
@@ -687,6 +699,7 @@ attachment:
     filename: affidavitofindigency
     pdf template file: affidavitofindigency.pdf
     editable: False
+    tagged pdf: True
     skip undefined: True
     fields:
       - "court": ${ affidavit_of_indigency_filing_court }
