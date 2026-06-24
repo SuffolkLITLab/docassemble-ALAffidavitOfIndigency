@@ -51,15 +51,8 @@ code: |
     explain_separate_affidavits
   other_parties.gather()
   case_name
-  public_assistance_kinds
-  if public_assistance_kinds.all_false():
-    has_household_members
-    if not household_income_qualifies:
-      can_afford
+  affidavit_legal_logic
   if is_indigent:
-    qualify_interstitial
-    if need_supplement:
-      interview_order_affidavit_of_indigency_supplement
     if not need_supplement:
       if affidavit_is_standalone:
         nav.set_section("fees_section")
@@ -76,6 +69,19 @@ code: |
 
     set_empty_fees
   ask_affidavit_questions = True
+---
+# Seperated out legal matter logic from the other setup questions in the interview.
+code: |
+  public_assistance_kinds
+  if public_assistance_kinds.all_false():
+    has_household_members
+    if not household_income_qualifies:
+      can_afford
+  if is_indigent:
+    qualify_interstitial
+    if need_supplement:
+      interview_order_affidavit_of_indigency_supplement
+  affidavit_legal_logic = True
 ---
 depends on:
   - public_assistance_kinds
