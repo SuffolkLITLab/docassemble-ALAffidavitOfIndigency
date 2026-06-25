@@ -9,6 +9,7 @@ include:
 ---
 modules:
   - docassemble.PovertyScale.poverty
+  - docassemble.ALAffidavitOfIndigency.affidavit_helpers
 ---
 mandatory: True
 variable name: interview_metadata["affidavit_of_indigency"]
@@ -592,7 +593,7 @@ subquestion: |
   
   **You earn less than the income limit.**
 
-  You said that your ${times_per_year(times_per_year_list, hh_income.times_per_year).lower()} income
+  You said that your ${safe_times_per_year(times_per_year_list, hh_income.times_per_year).lower()} income
   is ${currency(hh_income.total(times_per_year=hh_income.times_per_year))}.
   
   The limit for a household of ${nice_number(household_size)} is 125% of
