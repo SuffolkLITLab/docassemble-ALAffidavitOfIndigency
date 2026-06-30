@@ -183,6 +183,7 @@ fields:
   - no label: users[0].accounts.there_is_another
     datatype: yesnoradio
 ---
+id: accounts-source-balance
 question: |
   Tell us about your ${ ordinal(i) } account
 fields:
@@ -224,6 +225,7 @@ code: |
   if not has_household_members:
     household.there_are_any = False
 ---
+id: household-employment
 question: |
   How many of your household members are employed?
 subquestion: |
@@ -239,6 +241,7 @@ code: |
 sets:
   - household[i].name.first
   - household[i].name.last
+id: household-member-name
 question: |
   What is the name of your ${ ordinal(i) } household member?
 fields:
@@ -257,6 +260,7 @@ question: |
 fields:
   - Job title: household[i].jobs[j].source
 ---
+id: household-employment-another
 question: |
   Do you have another household member that is employed?
 subquestion: |
@@ -308,6 +312,7 @@ code: |
   users[0].nonemployment.revisit = True
   users[0].nonemployment.gathered = True
 ---
+id: income-source-amount
 question: |
   Tell us about your ${ ordinal(i) } income
 subquestion: |
@@ -331,6 +336,7 @@ fields:
   - Amount of income: users[0].nonemployment[i].value
     datatype: currency
 ---
+id: nonemployment-income-amount
 question: |
   Tell us about your ${ nonemployment_income_terms.get(users[0].nonemployment[i].source, users[0].nonemployment[i].source.replace("_", " ")).lower() } income
 subquestion: |
@@ -365,7 +371,7 @@ fields:
   - no label: users[0].nonemployment.there_is_another
     datatype: yesnoradio
 ---
-id: any non-employment incomes
+id: users0 any non-employment incomes
 question: |
   Do you get any money that is not from a job?
 subquestion: |
@@ -503,6 +509,7 @@ fields:
     datatype: currency
 ---
 generic object: ALItemizedJob
+id: aff-supp-job-incomes-or-deductions
 question: |
     Does your job as a ${ x.source } have other incomes or deductions?
 fields:
@@ -640,6 +647,7 @@ subquestion: |
 
 field: review_income_screen
 ---
+id: aff-supp-correcting-household
 question: |
   You might not need to complete this supplement
 subquestion: |
@@ -670,8 +678,6 @@ fields:
     datatype: currency
     min: 0
 ---
-code: |
----
 id: name of one itemized job in list
 question: |
   What is the the job title of your ${ 'primary' if i == 0 else ordinal(i)} job?
@@ -686,7 +692,7 @@ id: home ownership
 question: |
   Do you own a home?
 fields:
-  - no label: user_owns_home
+  - "Do you own a home?": user_owns_home
     datatype: yesnoradio
   - "What is the value of the home?": user_home_value
     show if: user_owns_home
@@ -704,7 +710,7 @@ id: car ownership
 question: |
   Do you own a car?
 fields:
-  - no label: user_owns_car
+  - "Do you own a car?": user_owns_car
     datatype: yesnoradio
   - "Car year": user_car_year
     show if: user_owns_car
@@ -726,6 +732,7 @@ fields:
     datatype: currency
     min: 0
 ---
+id: aff-supp-own-property
 question: |
   Do you own any property you haven't told us about?
 subquestion: |
@@ -806,7 +813,7 @@ continue button field: affidavit_of_indigency_supplement_preview_question
 ---
 sets:
   - x.jobs[i].is_self_employed
-id: employer
+id: alindividual-employer
 generic object: ALIndividual
 question: |
   Who is the employer of ${ x } for ${ x.jobs[i].source }
@@ -825,7 +832,7 @@ fields:
 ---
 sets:
   - users[0].jobs[i].is_self_employed
-id: employer
+id: users0-employer
 question: |
   Tell us who employs you as a ${ users[0].jobs[i].source }
 fields:
@@ -857,6 +864,7 @@ content: |
   Suite
 ---
 continue button field: users.revisit
+id: aff-edit-users
 question: |
   Edit users
 subquestion: |
@@ -897,6 +905,7 @@ edit:
   - times_per_year
 ---
 continue button field: household.revisit
+id: aff-edit-household-members
 question: |
   Edit household members
 subquestion: |
@@ -920,6 +929,7 @@ edit:
   - jobs.revisit
 ---
 continue button field: users[0].nonemployment.revisit
+id: aff-edit-non-job-income
 question: |
   Edit incomes not from a job
 subquestion: |
@@ -928,6 +938,7 @@ subquestion: |
   ${ users[0].nonemployment.add_action() }
 ---
 continue button field: users[0].expenses.revisit
+id: aff-edit-expenses
 question: |
   Edit expenses
 subquestion: |
@@ -936,6 +947,7 @@ subquestion: |
   ${ users[0].expenses.add_action() }
 ---
 continue button field: users[0].accounts.revisit
+id: aff-edit-accounts
 question: |
   Edit accounts
 subquestion: |

@@ -26,16 +26,6 @@ objects:
   - fees: DADict.using(gathered=True, auto_gather=False, object_type=DAObject)
   - users: ALPeopleList.using(there_are_any=True)
 ---
-comment: |
-  Transition to the affidavitofindigency as a Bundle object, not a document
-mandatory: True
-id: remove_old_indigency_doc
-code: |
-  if defined('affidavitofindigency_attachment') and not isinstance(affidavitofindigency_attachment, ALDocumentBundle):
-    del affidavitofindigency_attachment
-    del al_user_bundle
-    del al_court_bundle
----
 code: |
   # By default, assume this will be included in other interviews
   affidavit_is_standalone = False
@@ -415,7 +405,7 @@ fields:
   - I can afford the costs: can_afford
     datatype: yesnoradio
 ---
-id: user does not qualify
+id: user does not qualify ending
 event: doesnt_qualify_ending
 question: |
   Sorry, it looks like you don't qualify
