@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "docassemble.ALAffidavitOfIndigency"
-version = "2.2.1"
+version = "2.3.0"
 description = "The Massachusetts Affidavit of Indigency, or Fee waiver form"
 readme = "README.md"
 authors = [
