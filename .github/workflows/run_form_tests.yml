@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Run integration tests
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: "ALKiln - Start the isolated temporary docassemble server on GitHub"
         id: github_server
         uses: suffolkLITLab/ALKiln/action_for_github_server@v5
