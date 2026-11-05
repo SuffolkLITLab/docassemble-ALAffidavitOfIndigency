@@ -26,16 +26,6 @@ objects:
   - fees: DADict.using(gathered=True, auto_gather=False, object_type=DAObject)
   - users: ALPeopleList.using(there_are_any=True)
 ---
-comment: |
-  Transition to the affidavitofindigency as a Bundle object, not a document
-mandatory: True
-id: remove_old_indigency_doc
-code: |
-  if defined('affidavitofindigency_attachment') and not isinstance(affidavitofindigency_attachment, ALDocumentBundle):
-    del affidavitofindigency_attachment
-    del al_user_bundle
-    del al_court_bundle
----
 code: |
   # By default, assume this will be included in other interviews
   affidavit_is_standalone = False
@@ -61,15 +51,8 @@ code: |
     explain_separate_affidavits
   other_parties.gather()
   case_name
-  public_assistance_kinds
-  if public_assistance_kinds.all_false():
-    has_household_members
-    if not household_income_qualifies:
-      can_afford
+  affidavit_legal_logic
   if is_indigent:
-    qualify_interstitial
-    if need_supplement:
-      interview_order_affidavit_of_indigency_supplement
     if not need_supplement:
       if affidavit_is_standalone:
         nav.set_section("fees_section")
@@ -86,6 +69,19 @@ code: |
 
     set_empty_fees
   ask_affidavit_questions = True
+---
+# Seperated out legal matter logic from the other setup questions in the interview.
+code: |
+  public_assistance_kinds
+  if public_assistance_kinds.all_false():
+    has_household_members
+    if not household_income_qualifies:
+      can_afford
+  if is_indigent:
+    qualify_interstitial
+    if need_supplement:
+      interview_order_affidavit_of_indigency_supplement
+  affidavit_legal_logic = True
 ---
 depends on:
   - public_assistance_kinds
@@ -415,7 +411,7 @@ fields:
   - I can afford the costs: can_afford
     datatype: yesnoradio
 ---
-id: user does not qualify
+id: user does not qualify ending
 event: doesnt_qualify_ending
 question: |
   Sorry, it looks like you don't qualify
@@ -680,6 +676,18 @@ objects:
   - affidavitofindigency_attachment: ALDocumentBundle.using(elements=[affidavit_of_indigency_first_form, affidavit_of_indigency_supplement_attachment], filename="affidavit_of_indigency", title="Affidavit of Indigency")
 ---
 code: |
+  affidavitofindigency_attachment.filing_type_filters = [
+    CodeType('1402'),
+    'Indigency affidavit and request for waiver', # the full title of the for
+    'Affidavit of Indigency',
+    'Indigency Affidavit', # Used for Appeals
+    ['Affidavit', 'Indigency']
+  ]
+---
+code: |
+  affidavitofindigency_attachment.document_type_filters = ['impounded'] # default impound
+---
+code: |
   if al_form_type == "appeal":
     affidavit_of_indigency_filing_court = showifdef('appeals_court', trial_court)
   else:
@@ -697,6 +705,7 @@ attachment:
     filename: affidavitofindigency
     pdf template file: affidavitofindigency.pdf
     editable: False
+    tagged pdf: True
     skip undefined: True
     fields:
       - "court": ${ affidavit_of_indigency_filing_court }
