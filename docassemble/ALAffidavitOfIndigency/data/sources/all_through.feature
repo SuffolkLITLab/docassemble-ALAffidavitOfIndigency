@@ -1,5 +1,10 @@
 Feature: Go through the entire interview
 
+# For new cases, use the docket question's default "New case" description.
+# Leave the already-checked "I do not know the docket number" box alone:
+# ALKiln v5 toggles it because the current labels have no aria-checked state.
+# Do not type into the duplicated docket input; its visible default is enough.
+
 @alaffidavit @aaoi1 @fast
 Scenario: Standalone affidavit starts
   Given the max seconds for each Step is 30
@@ -26,8 +31,6 @@ Scenario: Standalone affidavit runs to completion
     | var | value | trigger |
     | acknowledged_information_use | True | |
     | case_new_or_existing | new | |
-    | dont_know_docket_number | True | |
-    | docket_numbers[0] | New case | |
     | user_ask_role | plaintiff | |
     | users[0].name.first | Bob | |
     | users[0].name.last | Ma | |
@@ -54,8 +57,6 @@ Scenario: aff income qualify to end
     | var | value | trigger |
     | acknowledged_information_use | True | |
     | case_new_or_existing | new | |
-    | dont_know_docket_number | True | |
-    | docket_numbers[0] | New case | |
     | user_ask_role | plaintiff | |
     | users[0].name.first | Bob | |
     | users[0].name.last | Ma | |
@@ -87,8 +88,6 @@ Scenario: aff supp to end
     | var | value | trigger |
     | acknowledged_information_use | True | |
     | case_new_or_existing | new | |
-    | dont_know_docket_number | True | |
-    | docket_numbers[0] | New case | |
     | user_ask_role | plaintiff | |
     | users[0].name.first | Bob | |
     | users[0].name.last | Ma | |
