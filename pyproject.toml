@@ -1,3 +1,8 @@
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "docassemble.ALAffidavitOfIndigency"
+# Keep the existing package metadata in setup.py as the source of truth.
+dynamic = ["version", "description", "readme", "authors", "license", "urls", "dependencies"]
