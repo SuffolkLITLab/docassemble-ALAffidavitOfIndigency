@@ -95,10 +95,8 @@ Scenario: Generated scenario
     | users[0].phone_number | 6175551212 |
     | users[0].email | user@example.com |
     | users[0].other_contact_method | Sample answer |
-    | dont_know_docket_number | True |
     | docket_number | Sample answer |
     | docket_numbers.there_are_any | Sample answer |
-    | docket_numbers[0] | Sample answer |
     | dont_know_case_number | True |
     | case_number | Sample answer |
     | case_numbers.there_are_any | Sample answer |
